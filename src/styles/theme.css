@@ -1,0 +1,157 @@
+:root {
+    /* Brand colors from your card */
+    --bg-deep: #0b1f22; /* deep teal background */
+    --bg-card: #0E2626;
+    --line: #0f2a2d; /* divider/outline teal */
+    --teal: #1f6e6e; /* primary teal accents */
+    --teal-soft: #2c8c8c; /* lighter teal */
+    --sun: #d86a1e; /* copper/orange headline & CTA */
+    --sun-2: #ffb15a; /* lighter orange for gradients */
+    --sand: #8e6331; /* copper-sand accent */
+    --ink: #F6F6F5; /* light text */
+    --muted: #C7D4D2; /* secondary text */
+    --radius: 20px;
+    --shadow: 0 20px 60px rgba(0,0,0,.45), 0 8px 24px rgba(0,0,0,.35);
+}
+
+html, body {
+    height: 100%
+}
+
+body {
+    margin: 0;
+    background: radial-gradient(1200px 700px at 80% -10%, #143232 0%, var(--bg-deep) 60%) fixed;
+    color: var(--ink);
+    font-family: Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    line-height: 1.6;
+}
+
+* {
+    box-sizing: border-box
+}
+
+a {
+    color: var(--sun)
+}
+
+    a:hover {
+        color: var(--sun-2)
+    }
+
+/* Make the app truly full-width */
+html, body, #root {
+    width: 100%;
+    min-width: 0;
+}
+
+.wrap {
+    /* remove the 1200px cap */
+    max-width: none;
+    width: 100%;
+    margin: 0; /* no centering box */
+    padding-inline: 0; /* set to 0 for edge-to-edge; change to 3vw if you want gutters */
+}
+
+/* Optional: if you want a readable container sometimes */
+.container {
+    width: min(100%, 1400px); /* adjust to taste */
+    margin: 0 auto;
+    padding-inline: clamp(12px, 2.5vw, 32px);
+}
+
+/* Keep media from overflowing on ultra-wide screens */
+img, svg, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+
+.small {
+    font-size: 13px;
+    color: var(--muted)
+}
+
+/* Header / Nav */
+.topbar {
+    position: sticky;
+    top: 0;
+    backdrop-filter: saturate(120%) blur(10px);
+    background: rgba(9,24,24,.65);
+    border-bottom: 1px solid var(--line);
+    z-index: 40
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px
+}
+
+.brand {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    text-decoration: none
+}
+
+/* Use company logo image (replaces the old .logo-mark square) */
+.logo-img {
+    height: 44px;
+    width: auto;
+    border-radius: 8px;
+    object-fit: contain;
+    background: transparent
+}
+
+.brand-title {
+    display: flex;
+    flex-direction: column;
+    line-height: 1
+}
+
+    .brand-title b {
+        font-family: "Alfa Slab One", system-ui;
+        font-weight: 400;
+        letter-spacing: .5px;
+        font-size: 18px
+    }
+
+.brand-sub {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.8px
+}
+
+.navlinks {
+    display: flex;
+    gap: 22px
+}
+
+    .navlinks a {
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        color: var(--muted)
+    }
+
+        .navlinks a:hover {
+            color: var(--ink)
+        }
+
+.cta {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 800;
+    letter-spacing: .4px;
+    background: linear-gradient(180deg, var(--sun-2), var(--sun));
+    color: #1e1e1e
+}
+
+    .cta:hover {
+        filter: brightness(1.05)
+    }
