@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import Orders from './Orders.jsx' // you already have this
+import AuthModal from './AuthModal.jsx'     //  ESM import for the browser
+import Orders from './Orders.jsx'           // you already have this
 
 export default function Account() {
   const [session, setSession] = useState(null)
@@ -9,9 +10,12 @@ export default function Account() {
   const [note, setNote] = useState('')
 
   useEffect(() => {
-    let sub = null
-    supabase.auth.getSession().then(({ data }) => setSession(data?.session || null))
-    sub = supabase.auth.onAuthStateChange((_evt, ses) => setSession(ses || null))
+    const init = async () => {
+      const { data } = await supabase.auth.getSession()
+      setSession(data?.session || null)
+    }
+    const sub = supabase.auth.onAuthStateChange((_evt, ses) => setSession(ses || null))
+    init()
     return () => sub?.data?.subscription?.unsubscribe()
   }, [])
 
@@ -30,7 +34,6 @@ export default function Account() {
   }, [session?.user?.id])
 
   if (!session?.user) {
-    const AuthModal = require('./AuthModal.jsx').default
     return (
       <section id="account" className="wrap">
         <h2 className="section-title">Account</h2>
@@ -45,12 +48,12 @@ export default function Account() {
     setSaving(true); setNote('Saving...')
     const up = {
       id: session.user.id,
-      full_name: profile.full_name || '',
-      phone: profile.phone || '',
-      address: profile.address || '',
-      city: profile.city || '',
-      state: profile.state || '',
-      zip: profile.zip || ''
+      full_name: profile?.full_name || '',
+      phone: profile?.phone || '',
+      address: profile?.address || '',
+      city: profile?.city || '',
+      state: profile?.state || '',
+      zip: profile?.zip || ''
     }
     const { error } = await supabase.from('profiles').upsert(up)
     setSaving(false)
