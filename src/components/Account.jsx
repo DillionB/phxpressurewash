@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import Account from './components/Account.jsx'
 import Orders from './Orders.jsx' // you already have this
 
 export default function Account() {

@@ -9,6 +9,8 @@ import ContactForm from './components/ContactForm.jsx'
 import Footer from './components/Footer.jsx'
 import Shop from './pages/Shop'
 import { CartProvider } from './state/CartContext'
+import Account from './components/Account.jsx'  // add this import
+
 
 // NEW: Stripe success/cancel banner and My Orders section
 import StripeReturn from './components/StripeReturn.jsx'
@@ -37,6 +39,11 @@ export default function App() {
                 </main>
 
                 <div className="pattern" aria-hidden="true"></div>
+                
+
+                <section id="account" className="wrap">
+                  <Account />
+                </section>
 
                 {/* Marketing/services overview (static grid) */}
                 <section id="services" className="wrap">
