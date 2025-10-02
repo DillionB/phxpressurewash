@@ -990,3 +990,76 @@ footer {
         min-width: 220px;
     }
 }
+/* --- Sizes you can tweak --- */
+:root {
+    --header-h: 72px;
+    --footer-h: 240px;
+    --ticker-h: 72px; /* height of the one-row services carousel */
+}
+
+/* Route content area between header/footer */
+#route-scroll {
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+    overflow: auto;
+}
+
+    /* Home disables scroll entirely */
+    #route-scroll.no-scroll {
+        overflow: hidden;
+    }
+
+/* Home screen: two rows (hero + ticker) with fixed ticker height */
+.hero-screen {
+    display: grid;
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+    grid-template-rows: calc(100% - var(--ticker-h)) var(--ticker-h);
+    padding: 0; /* keep tight so nothing pushes total height */
+}
+
+/* Hero row layout */
+.hero-screen-main {
+    display: grid;
+    align-items: center; /* vertically center hero content */
+    overflow: hidden; /* avoid creeping overflow */
+    padding: 10px 0 0;
+}
+
+/* Make hero more compact on Home */
+.hero-screen .hero-grid {
+    gap: clamp(10px, 2vw, 18px);
+}
+
+.hero-screen .hero h1 {
+    font-size: clamp(28px, 4.5vw, 48px);
+    margin-bottom: 10px;
+}
+
+.hero-screen .hero p {
+    margin: 6px 0 12px;
+}
+
+.hero-screen .inline-check {
+    margin: 6px 0 4px;
+}
+
+.hero-screen .scheduler {
+    margin-top: 10px;
+}
+
+/* Ticker row locked height */
+.hero-screen-ticker {
+    height: var(--ticker-h);
+    display: grid;
+    align-items: center;
+}
+
+/* Ensure the ticker content fits within its row */
+.ticker {
+    height: 100%;
+    display: grid;
+    align-items: center;
+}
+
+.ticker-track {
+    padding: 0 6px;
+}
