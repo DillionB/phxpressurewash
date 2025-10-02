@@ -8,6 +8,7 @@ export default function SlideNavigator() {
     '/shop/com',
     '/shop/ind',
     '/rewards',
+    '/reviews',
     '/account',  // Next main tab (append '/rewards' later if wanted)
   ]
 
