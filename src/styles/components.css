@@ -1058,3 +1058,28 @@ footer {
     animation: none !important;
 }
 
+/* === TICKER FIX: smoother fade + absolute tracks (no snap) === */
+
+/* Let items fully glide out before disappearing */
+.ticker-viewport,
+.carousel-viewport {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    /* wider feather: was 5%/95%, use 14%/86% */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 14%, black 86%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 14%, black 86%, transparent 100%);
+}
+
+/* Tracks are moved by JS; pin them and center vertically */
+.ticker-track,
+.carousel-track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate3d(0, -50%, 0); /* keep your existing X-translate from JS */
+    width: max-content;
+    will-change: transform;
+    /* keep your existing gap/padding/height from earlier rules */
+    animation: none !important; /* ensure CSS keyframes don’t fight JS */
+}
