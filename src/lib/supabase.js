@@ -8,6 +8,6 @@ export const supabase = createClient(url, anon, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'phxwash-auth' // stable key
+    storageKey: 'phxwash-auth' // keep stable across deploys
   }
 })
