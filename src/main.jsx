@@ -16,7 +16,8 @@ import NotFound from './pages/NotFound.jsx'
 import { CartProvider } from './state/CartContext'
 
 // Global styles
-import './styles.css'
+import './styles/theme.css'
+import './styles/components.css'
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
