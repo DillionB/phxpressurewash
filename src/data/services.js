@@ -6,7 +6,7 @@ export const services = [
   },
   {
     badge: '🚘 Driveways & Walkways',
-    title: 'Concrete, Pavers & Oil Stain Removal',
+    title: 'Concrete, & Oil Stain Removal',
     copy: 'Deep-clean concrete, degrease oil and tire marks, and brighten pavers with a rotary surface cleaner.'
   },
   {
