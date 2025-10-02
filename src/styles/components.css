@@ -1063,3 +1063,86 @@ footer {
 .ticker-track {
     padding: 0 6px;
 }
+/* Dynamic sizes are written by SiteLayout effect */
+:root {
+    --header-h: 72px;
+    --footer-h: 240px;
+    --ticker-h: 64px; /* try 56–72px if you want tighter/looser */
+}
+
+/* The scrollable area for normal pages */
+#route-scroll {
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+    overflow: auto;
+}
+
+    /* Home disables page scroll entirely */
+    #route-scroll.no-scroll {
+        overflow: hidden;
+    }
+
+/* Home screen: exact height between header and footer */
+.hero-screen {
+    height: calc(100dvh - var(--header-h) - var(--footer-h));
+    display: grid;
+    grid-template-rows: 1fr var(--ticker-h);
+    gap: 0;
+    padding: 0 !important; /* ensure section padding never leaks in */
+}
+
+/* Hero row */
+.hero-screen-main {
+    min-height: 0; /* allow content to shrink within grid */
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Make hero content more compact specifically on Home */
+.hero-screen .hero-grid {
+    gap: clamp(8px, 2vw, 16px);
+}
+
+.hero-screen .hero h1 {
+    font-size: clamp(28px, 4.3vw, 46px);
+    margin-bottom: 8px;
+}
+
+.hero-screen .hero p {
+    margin: 4px 0 10px;
+}
+
+.hero-screen .inline-check {
+    margin: 6px 0 6px;
+}
+
+.hero-screen .scheduler {
+    margin-top: 8px;
+}
+
+/* The right-side emblem should never dictate vertical height */
+.hero-screen .emblem {
+    aspect-ratio: auto; /* unfix the 1:1 for Home */
+    height: clamp(220px, 32vh, 340px); /* keep it visually strong but bounded */
+    max-width: 100%;
+}
+
+/* Ticker row locked height */
+.hero-screen-ticker {
+    height: var(--ticker-h);
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Make sure your ticker doesn’t add margins that push height */
+.ticker {
+    height: 100%;
+    display: grid;
+    align-items: center;
+    margin: 0;
+}
+
+.ticker-track {
+    padding: 0 6px;
+}
