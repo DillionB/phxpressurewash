@@ -1578,6 +1578,6 @@ footer {
 
 /* Slightly larger Industrial icon for visual balance */
 .subtabs-lg .excavator-ico {
-    width: 42px; /* was 36px on others */
-    height: 42px;
+    width: 84px; /* was 36px on others */
+    height: 84px;
 }
