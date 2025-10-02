@@ -44,7 +44,7 @@ export default function Hero() {
     const bgEl = bgRef.current
     if (!wrap || !bgEl) return
 
-    const BASE_Y = -20      // raise default Y so moving down never shows a gap
+    const BASE_Y = -10      // raise default Y so moving down never shows a gap
     const maxX  = 14        // px
     const maxY  = 28        // px (allow more vertical travel)
     let raf = 0
