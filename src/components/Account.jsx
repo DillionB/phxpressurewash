@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import AuthModal from './AuthModal.jsx'     //  ESM import for the browser
-import Orders from './Orders.jsx'           // you already have this
+import AuthModal from './AuthModal.jsx'
+import Orders from './Orders.jsx'
 
 export default function Account() {
   const [session, setSession] = useState(null)
@@ -9,29 +9,66 @@ export default function Account() {
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
 
+  // Create a blank profile row for this user if missing (RLS allows insert when auth.uid() = id)
+  async function ensureProfile(user) {
+    if (!user?.id) return
+    // check if profile exists
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .limit(1)
+    if (error) {
+      console.warn('profile check failed:', error.message)
+      return
+    }
+    const exists = Array.isArray(data) && data.length > 0
+    if (!exists) {
+      const meta = user.user_metadata || {}
+      const { error: insErr } = await supabase.from('profiles').insert({
+        id: user.id,
+        full_name: meta.full_name || '',
+        phone: meta.phone || ''
+      })
+      if (insErr) console.warn('profile create failed:', insErr.message)
+    }
+  }
+
+  async function loadProfile(user) {
+    if (!user?.id) { setProfile(null); return }
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    if (error) console.warn(error.message)
+    setProfile(data || { id: user.id })
+  }
+
   useEffect(() => {
     const init = async () => {
       const { data } = await supabase.auth.getSession()
-      setSession(data?.session || null)
+      const ses = data?.session || null
+      setSession(ses)
+      const user = ses?.user || null
+      if (user) {
+        await ensureProfile(user)
+        await loadProfile(user)
+      }
     }
-    const sub = supabase.auth.onAuthStateChange((_evt, ses) => setSession(ses || null))
+    const sub = supabase.auth.onAuthStateChange(async (_evt, ses) => {
+      setSession(ses || null)
+      const user = ses?.user || null
+      if (user) {
+        await ensureProfile(user)
+        await loadProfile(user)
+      } else {
+        setProfile(null)
+      }
+    })
     init()
     return () => sub?.data?.subscription?.unsubscribe()
   }, [])
-
-  useEffect(() => {
-    async function load() {
-      if (!session?.user) { setProfile(null); return }
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
-      if (error) console.error(error)
-      setProfile(data || { id: session.user.id })
-    }
-    load()
-  }, [session?.user?.id])
 
   if (!session?.user) {
     return (
