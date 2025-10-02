@@ -1,83 +1,35 @@
-import React, { useState } from 'react'
-import Header from './components/Header.jsx'
-import Hero from './components/Hero.jsx'
-import Services from './components/Services.jsx'
-import Coverage from './components/Coverage.jsx'
-import Gallery from './components/Gallery.jsx'
-import Reviews from './components/Reviews.jsx'
-import ContactForm from './components/ContactForm.jsx'
-import Footer from './components/Footer.jsx'
-import Shop from './pages/Shop'
-import { CartProvider } from './state/CartContext'
-import Account from './components/Account.jsx'  // add this import
-import Rewards from './components/Rewards.jsx'
-
-// NEW: Stripe success/cancel banner and My Orders section
+import React from 'react'
+import { Routes, Route } from 'react-router-dom'
 import StripeReturn from './components/StripeReturn.jsx'
-import Orders from './components/Orders.jsx'
+import SiteLayout from './layouts/SiteLayout.jsx'
+
+import Home from './pages/Home.jsx'
+import ShopPage from './pages/ShopPage.jsx'
+import AccountPage from './pages/AccountPage.jsx'
+import NotFound from './pages/NotFound.jsx'
+
+import { CartProvider } from './state/CartContext'
 
 export default function App() {
-    const [shopTab, setShopTab] = useState('res') // 'res' | 'com' | 'ind'
+  return (
+    <CartProvider>
+      {/* Shows success/cancel banner after Stripe redirect */}
+      <StripeReturn />
 
-    // When a header tab is clicked, set the tab and scroll to the shop
-    const handleChangeShopTab = (val) => {
-        setShopTab(val)
-        const el = document.getElementById('services-shop')
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+      <Routes>
+        {/* All routes share the same header/footer */}
+        <Route element={<SiteLayout />}>
+          <Route index element={<Home />} />
 
-    return (
-        <CartProvider>
-            <div className="min-h-screen">
-                {/* Shows a banner when returning from Stripe (?success=1 or ?canceled=1) */}
-                <StripeReturn />
+          {/* Shop tabs: /shop/res | /shop/com | /shop/ind */}
+          <Route path="/shop/:tab" element={<ShopPage />} />
 
-                <Header shopTab={shopTab} onChangeShopTab={handleChangeShopTab} />
+          {/* Account hub with internal tabs (Profile / Orders / Rewards) */}
+          <Route path="/account" element={<AccountPage />} />
 
-                <main id="home" className="wrap hero">
-                    <Hero />
-                </main>
-
-                <div className="pattern" aria-hidden="true"></div>
-                
-
-                <section id="account" className="wrap">
-                  <Account />
-                </section>
-                <section id="rewards" className="wrap">
-                  <Rewards />
-                </section>
-                
-                {/* Signed-in users can see their orders (RLS enforced) */}
-                <Orders />
-
-                <Footer />
-
-                {/* Marketing/services overview (static grid) */}
-                <section id="services" className="wrap">
-                    <Services />
-                </section>
-
-                {/* Interactive shop with tabs and cart */}
-                <Shop activeTab={shopTab} onChangeTab={setShopTab} />
-
-                <section id="coverage" className="wrap coverage">
-                    <Coverage />
-                </section>
-
-                <section id="gallery" className="wrap">
-                    <Gallery />
-                </section>
-
-                <section id="reviews" className="wrap">
-                    <Reviews />
-                </section>
-
-                <section id="contact" className="wrap">
-                    <ContactForm />
-                </section>
-
-            </div>
-        </CartProvider>
-    )
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </CartProvider>
+  )
 }
