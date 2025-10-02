@@ -901,7 +901,7 @@ footer {
     border-radius: 999px;
     color: var(--muted);
     background: #102727;
-    font-size: clamp(10px, 1.1vw, 14px);
+    font-size: clamp(10px, 1.1vw, 17px);
     width: max-content;
 }
 
