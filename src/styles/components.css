@@ -1315,18 +1315,21 @@ footer {
     text-align: center;
 }
 
+/* let the center column allow a wider logo */
 .hero-center-inner {
-    width: min(900px, 100%);
+    width: min(1100px, 100%); /* was 900px */
 }
 
+/* make the logo larger but still responsive */
 .hero-logo {
-    width: clamp(220px, 45vw, 540px);
+    width: clamp(280px, 60vw, 720px); /* was clamp(220px, 45vw, 540px) */
     height: auto;
     display: block;
     margin-inline: auto;
     margin-bottom: 10px;
     filter: drop-shadow(0 8px 28px rgba(0,0,0,.35));
 }
+
 
 .hero-blurb {
     margin: 10px 0 16px;
