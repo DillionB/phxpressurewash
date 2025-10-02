@@ -55,7 +55,9 @@ export default function Header(){
                 Reviews
               </NavLink>
 
-              <a href="/#contact" onClick={gotoHomeAnchor('contact')}>Contact</a>
+               <NavLink to="/contact" className={({isActive}) => isActive ? 'active' : undefined}>
+               Contact
+               </NavLink>
 
               <NavLink to="/account" className={({isActive}) => isActive ? 'active' : undefined}>
                 Account
