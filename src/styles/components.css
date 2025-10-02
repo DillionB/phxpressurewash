@@ -829,3 +829,42 @@ footer {
         width: 100%;
     }
 }
+
+
+/* ==== SERVICES SUB-TABS: STRONG ORANGE ACTIVE STATE ==== */
+/* Stronger base border so the active change is obvious */
+.subtabs.subtabs-lg .subtab-btn {
+    border-width: 2px; /* was 1px */
+}
+
+    /* Active = Phoenix orange outline + subtle glow + crisper underbar */
+    .subtabs.subtabs-lg .subtab-btn.active {
+        border-color: var(--sun); /* stylistically matching orange */
+        background: linear-gradient(180deg, rgba(31,110,110,.22), rgba(10,26,26,.88));
+        box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 35%, transparent), 0 0 0 3px color-mix(in srgb, var(--sun) 24%, transparent), 0 12px 32px rgba(0,0,0,.38);
+        transform: translateY(-1px);
+    }
+
+        /* Make the icon pod look “selected” too */
+        .subtabs.subtabs-lg .subtab-btn.active .subtab-ico {
+            box-shadow: inset 0 0 0 2px var(--sun), 0 10px 22px rgba(0,0,0,.28);
+            background: radial-gradient(88% 88% at 50% 50%, color-mix(in srgb, var(--sun) 26%, transparent), rgba(255,199,92,.08));
+        }
+
+        /* Thicker, brighter underbar highlight (matches header vibe) */
+        .subtabs.subtabs-lg .subtab-btn.active::after {
+            left: 16px;
+            right: 16px;
+            bottom: 8px;
+            height: 6px; /* thicker */
+            background: linear-gradient(90deg, var(--sun), #ffd37a);
+            opacity: .98;
+            box-shadow: 0 2px 8px color-mix(in srgb, var(--sun) 40%, transparent);
+        }
+
+        /* Hover should not overpower active, but still feel responsive */
+        .subtabs.subtabs-lg .subtab-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 40%, transparent), 0 0 0 4px color-mix(in srgb, var(--sun) 18%, transparent), 0 14px 34px rgba(0,0,0,.4);
+        }
+
