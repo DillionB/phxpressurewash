@@ -746,13 +746,13 @@ footer {
 }
 
 /* ===========================
-   ROUTE / HOME SCREEN LAYOUT + TICKER (final, deduped)
+   ROUTE / HOME SCREEN + TICKER (compact)
    =========================== */
 :root {
     --header-h: 72px;
     --footer-h: 240px;
-    /* tune 0.50–0.70 for ticker share of height */
-    --home-ticker-ratio: 0.60;
+    /* total height of the ticker row — tweak this */
+    --ticker-h: clamp(110px, 18vh, 160px);
 }
 
 #route-scroll {
@@ -764,11 +764,11 @@ footer {
         overflow: hidden;
     }
 
-/* Split hero/ticker with no page scroll */
+/* Two rows: hero fills, ticker fixed */
 .hero-screen {
     --avail: calc(100dvh - var(--header-h) - var(--footer-h));
     display: grid;
-    grid-template-rows: calc(var(--avail) * (1 - var(--home-ticker-ratio))) calc(var(--avail) * var(--home-ticker-ratio));
+    grid-template-rows: 1fr var(--ticker-h);
     min-height: var(--avail);
     padding: 0 !important;
 }
@@ -784,32 +784,45 @@ footer {
     overflow: hidden;
 }
 
+/* Make hero compact so nothing clips */
 .hero-screen .hero {
-    padding: 28px 0 16px;
+    padding: 20px 0 10px;
 }
 
 .hero-screen .hero-grid {
+    gap: clamp(10px, 1.8vw, 18px);
     align-items: center;
-    gap: clamp(12px,2vw,22px);
 }
 
 .hero-screen .hero h1 {
-    font-size: clamp(30px, 4.8vw, 56px);
-    margin-bottom: 10px;
+    font-size: clamp(28px, 4.2vw, 48px);
+    margin-bottom: 8px;
 }
 
 .hero-screen .hero p {
-    margin: 6px 0 14px;
+    margin: 6px 0 12px;
 }
 
-/* emblem in home should not dictate height */
+.hero-screen .inline-check {
+    margin: 6px 0 6px;
+}
+
+.hero-screen .scheduler {
+    margin-top: 10px;
+}
+
 .hero-screen .emblem {
     aspect-ratio: auto;
-    height: clamp(220px, 32vh, 340px);
+    height: clamp(200px, 28vh, 300px);
     max-width: 100%;
 }
 
-/* ===== Services Ticker as big rectangular cards (infinite) ===== */
+/* -------- Ticker (big cards, infinite) -------- */
+.hero-screen-ticker {
+    padding: 0;
+}
+/* ticker consumes its full row */
+
 .ticker {
     height: 100%;
     background: linear-gradient(180deg,#0f2626,#0b1f1f);
@@ -819,8 +832,9 @@ footer {
     margin: 0;
 }
 
+/* viewport + track */
 .ticker-viewport,
-.carousel-viewport { /* support both class names if used */
+.carousel-viewport {
     position: relative;
     height: 100%;
     overflow: hidden;
@@ -831,10 +845,10 @@ footer {
 .ticker-track,
 .carousel-track {
     display: flex;
-    gap: clamp(16px, 2vw, 24px);
-    align-items: stretch;
+    gap: clamp(12px, 1.8vw, 18px);
+    align-items: center; 
     height: 100%;
-    padding: 12px 6%;
+    padding: 8px 5%;
     width: max-content;
     animation: ticker-loop 32s linear infinite;
 }
@@ -854,9 +868,10 @@ footer {
     }
 }
 
-/* Big rectangular cards (ticker/service) */
-.ticker-card, .service-card {
-    height: calc(100% - 12px);
+/* Card size = % of ticker row */
+.ticker-card,
+.service-card {
+    height: calc(var(--ticker-h) * 0.80); 
     aspect-ratio: 16 / 9;
     flex: 0 0 auto;
     background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
@@ -867,114 +882,67 @@ footer {
     display: grid;
 }
 
-.ticker-card-inner, .service-card-inner {
+.ticker-card-inner,
+.service-card-inner {
     display: grid;
-    grid-template-rows: auto auto 1fr auto;
-    gap: 10px;
-    padding: clamp(12px, 2vw, 18px);
+    grid-template-rows: auto auto 1fr;
+    gap: 8px;
+    padding: clamp(10px, 1.4vw, 14px);
 }
 
-.ticker-card .badge, .service-card .badge {
+/* Smaller, non-clipping type inside cards */
+.ticker-card .badge,
+.service-card .badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 10px;
+    padding: 4px 8px;
     border: 1px solid var(--line);
     border-radius: 999px;
     color: var(--muted);
     background: #102727;
-    font-size: clamp(12px,1.2vw,14px);
+    font-size: clamp(10px, 1.1vw, 12px);
     width: max-content;
 }
 
-.ticker-card h3, .service-card h3 {
+.ticker-card h3,
+.service-card h3 {
     margin: 0;
-    font-size: clamp(18px, 2.2vw, 24px);
+    font-size: clamp(12px, 1.4vw, 16px);
     line-height: 1.15;
 }
 
-.ticker-card .ti-copy, .service-card p {
+.ticker-card .ti-copy,
+.service-card p {
     margin: 0;
     color: var(--muted);
-    font-size: clamp(14px, 1.4vw, 16px);
+    font-size: clamp(11px, 1.2vw, 13px);
 }
 
-.ticker-card .ti-img, .service-img {
-    margin-top: 8px;
-    border: 1px dashed var(--line);
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(31,110,110,.12), rgba(31,110,110,.04));
-    min-height: 0;
-}
-
+/* If your ticker uses simple pills, make those smaller too */
 .ticker-item {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     line-height: 1.2;
     padding: 6px 10px;
     border: 1px solid var(--line);
     border-radius: 999px;
     background: #102727;
     color: var(--muted);
-    font-size: clamp(13px, 1.2vw, 15px);
+    font-size: clamp(11px, 1.1vw, 13px);
     white-space: nowrap;
     box-shadow: var(--shadow);
 }
 
-.ti-badge {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 4px;
-}
-
-.ti-title {
-    font-weight: 700;
-    color: var(--ink);
-}
-
-/* Ticker density tweaks */
-@media (max-width: 960px) {
-    :root {
-        --home-ticker-ratio: 0.55;
-    }
-}
-
+/* Mobile tuning */
 @media (max-width: 640px) {
     :root {
-        --home-ticker-ratio: 0.50;
+        --ticker-h: clamp(110px, 22vh, 150px);
     }
 
     .ticker-track, .carousel-track {
-        gap: 12px;
+        gap: 10px;
         padding-inline: 4%;
     }
-
-    .ticker-item {
-        min-width: 220px;
-    }
-}
-/* Make ticker cards ~25% of the ticker row height */
-.ticker {
-    --card-scale: 0.25;
-}
-
-/* Let cards keep their own height instead of stretching full row height */
-.ticker-track,
-.carousel-track {
-    align-items: center; /* was: stretch */
-}
-
-/* Scale card height relative to the ticker row */
-.ticker-card,
-.service-card {
-    height: calc((100% - 12px) * var(--card-scale)); /* ~25% of row */
-}
-
-/* (Optional) if you want them even smaller on phones, tweak the scale */
-@media (max-width: 640px) {
-    .ticker {
-        --card-scale: 0.30;
-    }
-    /* a tad larger on small screens so they’re readable */
 }
