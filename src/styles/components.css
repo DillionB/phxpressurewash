@@ -1146,3 +1146,81 @@ footer {
 .ticker-track {
     padding: 0 6px;
 }
+/* dynamic sizes written by SiteLayout effect */
+:root {
+    --header-h: 72px;
+    --footer-h: 240px;
+    /* make the ticker taller so nothing is clipped */
+    --ticker-h: 92px; /* desktop default */
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --ticker-h: 84px;
+    }
+}
+
+@media (max-width: 640px) {
+    :root {
+        --ticker-h: 76px;
+    }
+}
+
+/* home screen layout (unchanged grid rows, now taller) */
+.hero-screen {
+    height: calc(100dvh - var(--header-h) - var(--footer-h));
+    display: grid;
+    grid-template-rows: 1fr var(--ticker-h);
+    gap: 0;
+    padding: 0 !important;
+}
+
+/* ticker row: ensure padding counts toward height and content is centered */
+.hero-screen-ticker {
+    height: var(--ticker-h);
+    box-sizing: border-box;
+    padding-block: 6px; /* small breathing room */
+    display: grid;
+    align-items: center;
+    overflow: hidden; /* keeps the row clean */
+    border-top: 1px solid var(--line); /* optional: a separator */
+    background: linear-gradient(180deg, #0f2626, #0b1f1f);
+}
+
+/* make the ticker internals fill the row without clipping */
+.ticker {
+    height: 100%;
+    display: grid;
+    align-items: center;
+    margin: 0;
+}
+
+.ticker-track {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 2vw, 24px);
+    white-space: nowrap;
+    /* ensure the items sit vertically centered within the row */
+}
+
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.2;
+    padding: 6px 10px; /* make sure padding fits in row */
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #102727;
+    color: var(--muted);
+    font-size: clamp(13px, 1.2vw, 15px);
+}
+
+    /* if your ticker uses icons/images, cap their height to the row */
+    .ticker-item img,
+    .ticker-item svg {
+        max-height: calc(var(--ticker-h) - 20px); /* row height minus paddings */
+        width: auto;
+        display: block;
+    }
