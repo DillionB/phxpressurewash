@@ -1053,4 +1053,8 @@ footer {
         padding-inline: 4%;
     }
 }
+/* JS drives the marquee now */
+.ticker-track {
+    animation: none !important;
+}
 
