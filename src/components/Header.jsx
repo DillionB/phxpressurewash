@@ -61,6 +61,7 @@ export default function Header({ shopTab = 'res', onChangeShopTab }) {
                     <a href="#contact">Contact</a>
                     {/* My Orders anchor (shows list for signed-in users) */}
                     <a href="#orders">My Orders</a>
+                    <a href="#rewards">Rewards</a>
                 </nav>
 
                 <a className="cta" href="#contact">Get a Free Quote</a>
