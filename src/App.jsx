@@ -47,6 +47,12 @@ export default function App() {
                 <section id="rewards" className="wrap">
                   <Rewards />
                 </section>
+                
+                {/* Signed-in users can see their orders (RLS enforced) */}
+                <Orders />
+
+                <Footer />
+
                 {/* Marketing/services overview (static grid) */}
                 <section id="services" className="wrap">
                     <Services />
@@ -71,10 +77,6 @@ export default function App() {
                     <ContactForm />
                 </section>
 
-                {/* Signed-in users can see their orders (RLS enforced) */}
-                <Orders />
-
-                <Footer />
             </div>
         </CartProvider>
     )
