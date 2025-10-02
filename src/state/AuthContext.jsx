@@ -1,7 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const AuthCtx = createContext(null)
+const defaultAuthValue = {
+  session: null,
+  user: null,
+  loading: true,
+  // no-op; safe to call even if provider isn't mounted
+  signOut: async () => {},
+}
+
+const AuthCtx = createContext(defaultAuthValue)
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
@@ -11,16 +19,17 @@ export function AuthProvider({ children }) {
     let mounted = true
 
     ;(async () => {
-      // Force canonical host so Supabase session storage stays on one origin
-      if (location.hostname === 'phxpressurewash.com') {
+      // Keep Supabase session on a single origin
+      if (typeof window !== 'undefined' && location.hostname === 'phxpressurewash.com') {
         location.replace(`https://www.phxpressurewash.com${location.pathname}${location.search}${location.hash}`)
         return
       }
 
-      const { data: { session } } = await supabase.auth.getSession()
-      let current = session || null
+      // Initial session
+      const { data: { session: initial } } = await supabase.auth.getSession()
+      let current = initial ?? null
 
-      // Nudge token refresh on first load after external redirects (Stripe/email link)
+      // Nudge a refresh after external redirects (Stripe/email link)
       if (current) {
         try {
           const { data, error } = await supabase.auth.refreshSession()
@@ -36,17 +45,18 @@ export function AuthProvider({ children }) {
       }
     })()
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, ses) => {
-      setSession(ses || null)
+    // Listen for auth changes
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, ses) => {
+      setSession(ses ?? null)
     })
 
     return () => {
-      sub?.subscription?.unsubscribe()
+      sub?.subscription?.unsubscribe?.()
       mounted = false
     }
   }, [])
 
-  // Robust sign out with local fallback
+  // Robust sign out with local fallback + visual reset
   const signOut = async () => {
     try {
       await supabase.auth.signOut()
@@ -55,12 +65,20 @@ export function AuthProvider({ children }) {
       await supabase.auth.signOut({ scope: 'local' })
     } finally {
       setSession(null)
-      location.reload()
+      // Hard reload to clear any user-scoped UI state
+      if (typeof window !== 'undefined') location.reload()
     }
   }
 
+  const value = {
+    session,
+    user: session?.user ?? null,
+    loading,
+    signOut,
+  }
+
   return (
-    <AuthCtx.Provider value={{ session, user: session?.user || null, loading, signOut }}>
+    <AuthCtx.Provider value={value}>
       {children}
     </AuthCtx.Provider>
   )
