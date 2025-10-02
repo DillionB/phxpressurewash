@@ -745,13 +745,26 @@ footer {
     }
 }
 
-/* ===== Home screen proportions: larger ticker, still no page scroll ===== */
+/* ===========================
+   ROUTE / HOME SCREEN LAYOUT + TICKER (final, deduped)
+   =========================== */
 :root {
-    /* tune this between 0.5 and 0.7 for how tall you want the ticker row */
+    --header-h: 72px;
+    --footer-h: 240px;
+    /* tune 0.50–0.70 for ticker share of height */
     --home-ticker-ratio: 0.60;
 }
 
-/* SiteLayout sets --header-h / --footer-h; compute available */
+#route-scroll {
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+    overflow: auto;
+}
+
+    #route-scroll.no-scroll {
+        overflow: hidden;
+    }
+
+/* Split hero/ticker with no page scroll */
 .hero-screen {
     --avail: calc(100dvh - var(--header-h) - var(--footer-h));
     display: grid;
@@ -765,7 +778,6 @@ footer {
     min-height: 0;
 }
 
-/* tighten hero so it never forces scroll */
 .hero-screen-main {
     display: grid;
     align-items: center;
@@ -790,23 +802,34 @@ footer {
     margin: 6px 0 14px;
 }
 
+/* emblem in home should not dictate height */
+.hero-screen .emblem {
+    aspect-ratio: auto;
+    height: clamp(220px, 32vh, 340px);
+    max-width: 100%;
+}
+
 /* ===== Services Ticker as big rectangular cards (infinite) ===== */
 .ticker {
     height: 100%;
     background: linear-gradient(180deg,#0f2626,#0b1f1f);
     border-top: 1px solid var(--line);
+    display: grid;
+    align-items: center;
+    margin: 0;
 }
 
-.ticker-viewport {
+.ticker-viewport,
+.carousel-viewport { /* support both class names if used */
     position: relative;
     height: 100%;
     overflow: hidden;
-    /* subtle side fade so items appear to enter/exit */
     -webkit-mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
 }
 
-.ticker-track {
+.ticker-track,
+.carousel-track {
     display: flex;
     gap: clamp(16px, 2vw, 24px);
     align-items: stretch;
@@ -816,7 +839,8 @@ footer {
     animation: ticker-loop 32s linear infinite;
 }
 
-.ticker:hover .ticker-track {
+.ticker:hover .ticker-track,
+.services-carousel:hover .carousel-track {
     animation-play-state: paused;
 }
 
@@ -828,13 +852,12 @@ footer {
     to {
         transform: translateX(-50%);
     }
-    /* we duplicated the list */
 }
 
-/* BIG rectangular cards, same vibe as .service */
-.ticker-card {
-    height: calc(100% - 12px); /* leave a little breathing room */
-    aspect-ratio: 16 / 9; /* wide card */
+/* Big rectangular cards (ticker/service) */
+.ticker-card, .service-card {
+    height: calc(100% - 12px);
+    aspect-ratio: 16 / 9;
     flex: 0 0 auto;
     background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
     border: 1px solid var(--line);
@@ -844,14 +867,14 @@ footer {
     display: grid;
 }
 
-.ticker-card-inner {
+.ticker-card-inner, .service-card-inner {
     display: grid;
     grid-template-rows: auto auto 1fr auto;
     gap: 10px;
     padding: clamp(12px, 2vw, 18px);
 }
 
-.ticker-card .badge {
+.ticker-card .badge, .service-card .badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -864,19 +887,19 @@ footer {
     width: max-content;
 }
 
-.ticker-card h3 {
+.ticker-card h3, .service-card h3 {
     margin: 0;
     font-size: clamp(18px, 2.2vw, 24px);
     line-height: 1.15;
 }
 
-.ticker-card .ti-copy {
+.ticker-card .ti-copy, .service-card p {
     margin: 0;
     color: var(--muted);
     font-size: clamp(14px, 1.4vw, 16px);
 }
-/* optional image area; replace with <img> later */
-.ticker-card .ti-img {
+
+.ticker-card .ti-img, .service-img {
     margin-top: 8px;
     border: 1px dashed var(--line);
     border-radius: 12px;
@@ -884,7 +907,33 @@ footer {
     min-height: 0;
 }
 
-/* responsiveness: slightly reduce ticker share on small screens */
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.2;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #102727;
+    color: var(--muted);
+    font-size: clamp(13px, 1.2vw, 15px);
+    white-space: nowrap;
+    box-shadow: var(--shadow);
+}
+
+.ti-badge {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.ti-title {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+/* Ticker density tweaks */
 @media (max-width: 960px) {
     :root {
         --home-ticker-ratio: 0.55;
@@ -896,9 +945,12 @@ footer {
         --home-ticker-ratio: 0.50;
     }
 
-    .ticker-track {
+    .ticker-track, .carousel-track {
         gap: 12px;
         padding-inline: 4%;
     }
-}
 
+    .ticker-item {
+        min-width: 220px;
+    }
+}
