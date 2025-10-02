@@ -1,66 +1,128 @@
-import React from 'react'
+// src/components/CartSummary.jsx
+import React, { useState } from 'react'
 import { useCart } from '../state/CartContext'
 import { supabase } from '../lib/supabase'
 
-export default function CheckoutButton({ className = 'cta' }) {
-  const { items } = useCart() // <-- your context returns { items, subtotal, ... }
+export default function CartSummary() {
+  const { items, subtotal, removeItem, clearCart } = useCart()
+  const [sending, setSending] = useState(false)
+  const [note, setNote] = useState('')
 
   const toCheckout = async () => {
-    const lines = Array.isArray(items) ? items : []
-    if (!lines.length) {
-      alert('Your cart is empty.')
+    setNote('')
+    if (!items || items.length === 0) {
+      setNote('Your cart is empty.')
       return
     }
 
-    // Get user (ok if not signed in)
-    let user = null
-    try {
-      const res = await supabase.auth.getUser()
-      user = res?.data?.user || null
-    } catch {}
-
-    // Build payload for the Netlify function
-    const payload = {
-      customer_email: user?.email || null,
-      user_id: user?.id || null,
-      items: lines
-        .map(l => ({
-          title: l.title || 'Service',
-          detail: l.detail || '',
-          unit_amount_cents: Math.round(Number(l.subtotal || 0) * 100),
-          qty: Number(l.qty || 1)
-        }))
-        .filter(x => Number.isFinite(x.unit_amount_cents) && x.unit_amount_cents > 0)
-    }
-
-    if (!payload.items.length) {
-      alert('All items are $0 — add a priced item first.')
-      return
-    }
-
-    // Call your serverless function
-    const resp = await fetch('/.netlify/functions/stripe-create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    // Normalize cart lines to unit prices in cents (Stripe requires unit_amount).
+    const normalized = items.map(l => {
+      const qty = Math.max(1, Number(l.qty || 1))
+      const total = Number(l.subtotal || 0) // your builder stores per-line total here
+      const unit = total / qty
+      return {
+        title: l.title || 'Service',
+        detail: l.detail || '',
+        price_cents: Math.round(unit * 100),
+        qty
+      }
     })
-    if (!resp.ok) {
-      const t = await resp.text()
-      console.error('Checkout start failed:', resp.status, t)
-      alert('Could not start checkout.')
+    // Filter out zero-priced lines (quote-only)
+    const billable = normalized.filter(x => Number.isFinite(x.price_cents) && x.price_cents > 0 && x.qty > 0)
+    if (billable.length === 0) {
+      setNote('All items are $0 — add a priced service first.')
       return
     }
-    const { url } = await resp.json()
-    if (!url) {
-      alert('No checkout URL returned.')
-      return
+
+    // Include Supabase access token so the function can attach user_id/email
+    let accessToken = null
+    try {
+      const { data } = await supabase.auth.getSession()
+      accessToken = data?.session?.access_token || null
+    } catch { /* ignore */ }
+
+    setSending(true)
+    try {
+      const resp = await fetch('/.netlify/functions/stripe-create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {})
+        },
+        body: JSON.stringify({ items: billable })
+      })
+
+      if (!resp.ok) {
+        const t = await resp.text()
+        console.error('Checkout start failed:', resp.status, t)
+        setNote('Could not start checkout. Please try again.')
+        return
+      }
+
+      const { url } = await resp.json()
+      if (!url) {
+        setNote('No checkout URL returned.')
+        return
+      }
+      window.location = url
+    } catch (e) {
+      console.error('Checkout error:', e)
+      setNote('Network error starting checkout.')
+    } finally {
+      setSending(false)
     }
-    window.location = url
   }
 
   return (
-    <button className={className} onClick={toCheckout}>
-      Proceed to Secure Checkout
-    </button>
+    <aside className="cart card" aria-label="Cart">
+      <h3 style={{ marginTop: 0 }}>Your Cart</h3>
+
+      {items.length === 0 && <p className="small">No items yet.</p>}
+
+      {items.map(item => (
+        <div key={item.id} className="cart-line">
+          <div>
+            <b>{item.title}</b>
+            {item.detail && <div className="small">{item.detail}</div>}
+            {!!item.qty && item.qty > 1 && (
+              <div className="small" style={{ opacity: .8 }}>
+                Qty: {item.qty}
+              </div>
+            )}
+            {item.meta && item.meta.length > 0 && (
+              <div className="small">Notes: {item.meta.join(', ')}</div>
+            )}
+          </div>
+          <div className="cart-right">
+            <div>${(Number(item.subtotal || 0)).toFixed(2)}</div>
+            <button className="mini-btn" onClick={() => removeItem(item.id)}>Remove</button>
+          </div>
+        </div>
+      ))}
+
+      <div className="cart-footer">
+        <div><b>Subtotal</b></div>
+        <div><b>${Number(subtotal || 0).toFixed(2)}</b></div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <button className="cta" onClick={toCheckout} disabled={sending || items.length === 0}>
+          {sending ? 'Starting checkout…' : 'Proceed to Secure Checkout'}
+        </button>
+        <button className="mini-btn" onClick={clearCart} disabled={sending || items.length === 0}>
+          Clear
+        </button>
+      </div>
+
+      <p className="small" style={{ marginTop: 8, opacity: .8 }}>
+        Totals shown here are estimates. Final pricing confirmed after site assessment.
+      </p>
+
+      {note && (
+        <p className="small" style={{ marginTop: 6, color: '#ffbda8' }}>
+          {note}
+        </p>
+      )}
+    </aside>
   )
 }

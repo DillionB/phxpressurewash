@@ -1,53 +1,74 @@
+// netlify/functions/stripe-create-checkout-session.js
 const Stripe = require('stripe')
+const { createClient } = require('@supabase/supabase-js')
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
-const LIMITS = { min: 100, max: 5_000_000, maxQty: 50 }
-
-// Helper to normalize base URL (prefer SITE_URL)
-function baseUrl() {
-  // Prefer your explicit SITE_URL, else Netlify's URL
-  const raw = (process.env.SITE_URL || process.env.URL || '').trim()
-  // Strip trailing slashes to avoid //?success=1
-  return raw.replace(/\/+$/, '')
-}
+// Use service role so we can verify the passed access token securely
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE, {
+  auth: { persistSession: false }
+})
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' }
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' }
+  }
+
   try {
-    const { items, customer_email, user_id } = JSON.parse(event.body || '{}')
-    if (!Array.isArray(items) || !items.length) {
+    const auth = event.headers.authorization || event.headers.Authorization || ''
+    const jwt = auth.startsWith('Bearer ') ? auth.slice(7) : null
+
+    let userId = null
+    let email = null
+    if (jwt) {
+      // Verify token and get the user
+      const { data, error } = await supabaseAdmin.auth.getUser(jwt)
+      if (!error && data?.user) {
+        userId = data.user.id
+        email = data.user.email
+      }
+    }
+
+    // Cart payload from the client: [{ title, price_cents, qty }, ...]
+    const body = JSON.parse(event.body || '{}')
+    const items = Array.isArray(body.items) ? body.items : []
+    if (items.length === 0) {
       return { statusCode: 400, body: 'No items' }
     }
 
-    const line_items = items.map(it => {
-      const unit = Math.max(LIMITS.min, Math.min(LIMITS.max, parseInt(it.unit_amount_cents, 10)))
-      const qty  = Math.max(1, Math.min(LIMITS.maxQty, parseInt(it.qty || 1, 10)))
-      const name = String(it.title || 'Service').slice(0, 100)
-      const desc = String(it.detail || '').slice(0, 400)
-      return {
-        price_data: { currency: 'usd', product_data: { name, description: desc }, unit_amount: unit },
-        quantity: qty
-      }
-    })
+    const line_items = items.map((it) => ({
+      quantity: Math.max(1, Number(it.qty) || 1),
+      price_data: {
+        currency: 'usd',
+        unit_amount: Math.max(0, Number(it.price_cents) || 0),
+        product_data: {
+          name: it.title || 'Service',
+          description: it.detail || undefined,
+        },
+      },
+    }))
 
-    const origin = baseUrl()
-    const success_url = `${origin}/?success=1&session_id={CHECKOUT_SESSION_ID}`
-    const cancel_url  = `${origin}/?canceled=1`
+    const siteUrl = process.env.SITE_URL || 'https://www.phxpressurewash.com'
+    const successUrl = `${siteUrl}/?success=1&session_id={CHECKOUT_SESSION_ID}`
+    const cancelUrl  = `${siteUrl}/?canceled=1`
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
-      allow_promotion_codes: true,
-      customer_email: customer_email || undefined,
-      metadata: { user_id: user_id || '' },
+      customer_email: email || undefined,       // helps us line up the order if userId is missing
+      metadata: userId ? { user_id: userId } : undefined,
       line_items,
-      success_url,
-      cancel_url
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      automatic_tax: { enabled: false },
     })
 
-    return { statusCode: 200, body: JSON.stringify({ url: session.url }) }
-  } catch (e) {
-    console.error(e)
+    return {
+      statusCode: 200,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: session.url }),
+    }
+  } catch (err) {
+    console.error('[stripe-create-checkout-session] error:', err)
     return { statusCode: 500, body: 'Server error' }
   }
 }

@@ -22,33 +22,42 @@ export default function Orders({ compact = false }) {
   }, [])
 
   async function loadOrders() {
-    // Try with server-side order first...
-    let resp = await supabase
-      .from('orders')
-      .select('id, status, amount_cents, currency, created_at, payment_intent, stripe_checkout_id')
-      .order('created_at', { ascending: false })
-
-    // ...if PostgREST returns 400 (schema cache mismatch, missing column, etc),
-    // fall back to no-order and sort client-side.
-    if (resp.error) {
-      console.warn('orders fetch error:', resp.error)
-      resp = await supabase
-        .from('orders')
-        .select('id, status, amount_cents, currency, created_at, payment_intent, stripe_checkout_id')
+    // --- Build a query LIMITED to the signed-in user's rows ---
+    const { data: { user } = {} } = await supabase.auth.getUser()
+    if (!user) {
+      setOrders([])
+      return
     }
 
+    // Select the columns you actually have. (If you later add a "currency"
+    // column, you can include it here and in the render.)
+    let q = supabase
+      .from('orders')
+      .select('id, status, amount_cents, created_at, payment_intent, stripe_checkout_id')
+
+    // Filter to "my" orders either by user_id or by email (RLS will still enforce)
+    if (user.id && user.email) {
+      q = q.or(`user_id.eq.${user.id},email.eq.${user.email}`)
+    } else if (user.id) {
+      q = q.eq('user_id', user.id)
+    } else if (user.email) {
+      q = q.eq('email', user.email)
+    }
+
+    // Try to fetch
+    let resp = await q
     if (resp.error) {
-      console.error('orders fetch still failing:', resp.error)
+      console.warn('orders fetch error:', resp.error)
       setOrders([])
       return
     }
 
     let ords = resp.data || []
-    // client-side sort by created_at desc
+    // Client-side sort newest first
     ords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     setOrders(ords)
 
-    // Fetch items in a second query (safe)
+    // Fetch items in a second call and stitch them in
     if (ords.length > 0) {
       const ids = ords.map(o => o.id)
       const itemsResp = await supabase
@@ -69,7 +78,7 @@ export default function Orders({ compact = false }) {
     }
   }
 
-  // optional realtime refresh
+  // Optional realtime refresh when new orders insert (webhook)
   useEffect(() => {
     if (!session?.user) return
     const ch = supabase
@@ -99,7 +108,7 @@ export default function Orders({ compact = false }) {
         {(orders || []).map(o => (
           <div key={o.id} className="card" style={{ marginBottom: 12 }}>
             <div><b>Status:</b> {o.status}</div>
-            <div><b>Total:</b> ${(o.amount_cents / 100).toFixed(2)} {o.currency?.toUpperCase()}</div>
+            <div><b>Total:</b> ${(o.amount_cents / 100).toFixed(2)}</div>
             <div><b>Date:</b> {new Date(o.created_at).toLocaleString()}</div>
             <div style={{ color: '#8fb', fontSize: 12 }}>
               Stripe Ref: {o.payment_intent || o.stripe_checkout_id}
