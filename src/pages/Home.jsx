@@ -1,11 +1,15 @@
 // src/pages/Home.jsx
 import React, { useEffect } from 'react'
 import Hero from '../components/Hero.jsx'
-import ServicesTicker from '../components/ServicesTicker.jsx'
+import ServicesCarousel from '../components/ServicesCarousel.jsx'
 
 export default function Home() {
   useEffect(() => {
-    // Smooth-scroll to an anchor if landing on /#section
+    // lock scroll on Home
+    const scroller = document.getElementById('route-scroll')
+    scroller?.classList.add('no-scroll')
+
+    // handle hash deep-link
     if (window.location.hash) {
       const id = window.location.hash.slice(1)
       const el = document.getElementById(id)
@@ -14,20 +18,18 @@ export default function Home() {
       })
     }
 
-    // Disable scrolling on the route wrapper for Home only
-    const rs = document.getElementById('route-scroll')
-    rs?.classList.add('no-scroll')
-    return () => rs?.classList.remove('no-scroll')
+    return () => {
+      scroller?.classList.remove('no-scroll')
+    }
   }, [])
 
   return (
-    // This container is two rows: (1) hero fills space, (2) ticker row
     <section id="home" className="wrap hero-screen">
-      <div className="hero-screen-main" style={{ height: '50%' }}>
+      <div className="hero-screen-main">
         <Hero />
       </div>
-      <div className="hero-screen-ticker">
-        <ServicesTicker />
+      <div className="hero-screen-carousel">
+        <ServicesCarousel />
       </div>
     </section>
   )

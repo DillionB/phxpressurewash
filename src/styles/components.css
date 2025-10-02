@@ -1224,3 +1224,162 @@ footer {
         width: auto;
         display: block;
     }
+/* ====== Home screen layout proportions ====== */
+/* Carousel should be big: use ~60% of the available page height for it */
+:root {
+    --home-carousel-ratio: 0.6; /* tweak between 0.5 and 0.7 to taste */
+}
+
+/* SiteLayout JS already sets --header-h / --footer-h. We derive section heights here. */
+.hero-screen {
+    /* total vertical space (no page scroll) */
+    height: calc(100dvh - var(--header-h) - var(--footer-h));
+    /* split between hero and carousel */
+    --carousel-h: calc((100dvh - var(--header-h) - var(--footer-h)) * var(--home-carousel-ratio));
+    --hero-h: calc((100dvh - var(--header-h) - var(--footer-h)) - var(--carousel-h));
+    display: grid;
+    grid-template-rows: var(--hero-h) var(--carousel-h);
+    gap: 0;
+    padding: 0 !important;
+}
+
+/* Make sure inner sections don't push the layout */
+.hero-screen-main,
+.hero-screen-carousel {
+    min-height: 0; /* critical so children don't overflow the grid rows */
+}
+
+/* The Hero region can scroll internally if it needs to (but we keep it tight) */
+.hero-screen-main {
+    overflow: hidden;
+    display: grid;
+    align-items: center; /* vertically center hero content */
+}
+
+/* Tighten hero spacing a bit so it doesn't feel tall */
+.hero-screen .hero {
+    padding: 36px 0 24px; /* smaller than default */
+}
+
+.hero-grid {
+    align-items: center;
+}
+
+/* ====== Infinite carousel row ====== */
+.services-carousel {
+    height: var(--carousel-h);
+    display: grid;
+    align-items: center;
+    background: linear-gradient(180deg, #0f2626, #0b1f1f);
+    border-top: 1px solid var(--line);
+    overflow: hidden;
+}
+
+.carousel-viewport {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    /* nice edge fade */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
+}
+
+/* Track scrolls left forever. Speed tuned for large cards. */
+.carousel-track {
+    display: flex;
+    gap: clamp(16px, 2vw, 24px);
+    align-items: stretch;
+    height: 100%;
+    padding-inline: 6%;
+    width: max-content;
+    animation: scroll-x 32s linear infinite;
+}
+
+.services-carousel:hover .carousel-track {
+    animation-play-state: paused;
+}
+
+@keyframes scroll-x {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+    /* because we duplicated the content */
+}
+
+/* ====== Big rectangular service cards ====== */
+.service-card {
+    height: calc(var(--carousel-h) - 24px); /* leave a bit of vertical breathing room */
+    aspect-ratio: 16 / 9; /* nice wide card */
+    flex: 0 0 auto; /* fixed-size boxes in the track */
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: grid;
+}
+
+/* inner spacing + layout */
+.service-card-inner {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto; /* badge, title, copy, image (or swap) */
+    gap: 10px;
+    padding: clamp(12px, 2.2vw, 18px);
+}
+
+/* Emphasize like before but larger */
+.service-card .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: clamp(12px, 1.2vw, 14px);
+    background: #102727;
+    width: max-content;
+}
+
+.service-card h3 {
+    margin: 0;
+    font-size: clamp(18px, 2.2vw, 24px);
+    line-height: 1.15;
+}
+
+.service-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: clamp(14px, 1.4vw, 16px);
+}
+
+/* Placeholder image area (swap to real image later) */
+.service-img {
+    margin-top: 8px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(31,110,110,.12), rgba(31,110,110,.04));
+    min-height: 0; /* keep inside the card */
+}
+
+/* Smaller screens: keep things legible, reduce height ratio a bit */
+@media (max-width: 960px) {
+    :root {
+        --home-carousel-ratio: 0.55;
+    }
+}
+
+@media (max-width: 640px) {
+    :root {
+        --home-carousel-ratio: 0.5;
+    }
+
+    .carousel-track {
+        gap: 12px;
+        padding-inline: 4%;
+    }
+}
