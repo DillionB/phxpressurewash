@@ -22,52 +22,59 @@ export default function Orders({ compact = false }) {
   }, [])
 
   async function loadOrders() {
-    // 1) fetch orders only (no join, safe)
-    const { data: ords, error: ordErr } = await supabase
+    // Try with server-side order first...
+    let resp = await supabase
       .from('orders')
       .select('id, status, amount_cents, currency, created_at, payment_intent, stripe_checkout_id')
       .order('created_at', { ascending: false })
 
-    if (ordErr) {
-      console.error('orders fetch error:', ordErr)
+    // ...if PostgREST returns 400 (schema cache mismatch, missing column, etc),
+    // fall back to no-order and sort client-side.
+    if (resp.error) {
+      console.warn('orders fetch error:', resp.error)
+      resp = await supabase
+        .from('orders')
+        .select('id, status, amount_cents, currency, created_at, payment_intent, stripe_checkout_id')
+    }
+
+    if (resp.error) {
+      console.error('orders fetch still failing:', resp.error)
       setOrders([])
       return
     }
-    if (!ords || ords.length === 0) {
-      setOrders([])
-      return
+
+    let ords = resp.data || []
+    // client-side sort by created_at desc
+    ords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    setOrders(ords)
+
+    // Fetch items in a second query (safe)
+    if (ords.length > 0) {
+      const ids = ords.map(o => o.id)
+      const itemsResp = await supabase
+        .from('order_items')
+        .select('id, order_id, title, detail, unit_amount_cents, qty')
+        .in('order_id', ids)
+
+      if (itemsResp.error) {
+        console.warn('order_items fetch error:', itemsResp.error)
+        return
+      }
+
+      const byOrder = {}
+      for (const it of (itemsResp.data || [])) {
+        (byOrder[it.order_id] ||= []).push(it)
+      }
+      setOrders(ords.map(o => ({ ...o, order_items: byOrder[o.id] || [] })))
     }
-
-    // 2) fetch items for those orders in a second query
-    const ids = ords.map(o => o.id)
-    const { data: items, error: itemErr } = await supabase
-      .from('order_items')
-      .select('id, order_id, title, detail, unit_amount_cents, qty')
-      .in('order_id', ids)
-
-    if (itemErr) {
-      console.error('order_items fetch error:', itemErr)
-    }
-
-    // 3) group items by order_id
-    const byOrder = {}
-    for (const it of (items || [])) {
-      if (!byOrder[it.order_id]) byOrder[it.order_id] = []
-      byOrder[it.order_id].push(it)
-    }
-
-    // 4) attach to orders
-    const merged = ords.map(o => ({ ...o, order_items: byOrder[o.id] || [] }))
-    setOrders(merged)
   }
 
-  // Optional: realtime refresh after webhook inserts an order
+  // optional realtime refresh
   useEffect(() => {
     if (!session?.user) return
     const ch = supabase
       .channel('orders_feed')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
-        // RLS ensures we only get our own rows
         loadOrders()
       })
       .subscribe()
@@ -88,7 +95,6 @@ export default function Orders({ compact = false }) {
       {!compact && <h2 className="section-title">My Orders</h2>}
       {!orders && <p className="section-sub">Loading…</p>}
       {orders && orders.length === 0 && <p className="section-sub">No orders yet.</p>}
-
       <div className="grid">
         {(orders || []).map(o => (
           <div key={o.id} className="card" style={{ marginBottom: 12 }}>
@@ -98,8 +104,7 @@ export default function Orders({ compact = false }) {
             <div style={{ color: '#8fb', fontSize: 12 }}>
               Stripe Ref: {o.payment_intent || o.stripe_checkout_id}
             </div>
-
-            {o.order_items.length > 0 && (
+            {o.order_items && o.order_items.length > 0 && (
               <div style={{ marginTop: 8 }}>
                 <b>Items</b>
                 <ul style={{ margin: '6px 0 0 18px' }}>
