@@ -51,35 +51,31 @@ export default function ShopPage(){
           <span className="subtab-label">Commercial</span>
         </NavLink>
 
-        <NavLink
+       <NavLink
           to="/services/ind"
           className={`subtab-btn ${current === 'ind' ? 'active' : ''}`}
           aria-current={current === 'ind' ? 'page' : undefined}
         >
           <span className="subtab-ico" aria-hidden="true">
-            {/* Excavator icon */}
+            {/* Excavator (simplified boom + bucket, cab, and track) */}
             <svg viewBox="0 0 24 24">
               <g fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                {/* tracks + rollers */}
-                <rect x="3" y="17" width="13.5" height="3" rx="1.5" />
-                <circle cx="7" cy="20" r="2" />
-                <circle cx="13" cy="20" r="2" />
-
-                {/* upper body / cab */}
-                <path d="M6 17v-3.5c0-.9.7-1.5 1.5-1.5H11l1.5 3V17" />
+                {/* track */}
+                <rect x="2.75" y="18" width="13.5" height="3" rx="1.5" />
+                {/* body / cab */}
+                <path d="M5.5 18v-4.5c0-.8.6-1.5 1.4-1.5H11l1.8 6" />
                 {/* cab window hint */}
-                <path d="M8.2 12.8h2.2" />
-
-                {/* boom (pivot at body) */}
-                <path d="M12.5 12.5l3-2.8 3 .9 2 3.9" />
-                {/* stick + bucket */}
-                <path d="M18.5 10.6l1.8 3.6-1.1 1.1-3-1" />
-                <path d="M20.3 14.2l.9 2.3-2 .6" />
+                <path d="M8 13h2.2" />
+                {/* boom + stick */}
+                <path d="M12.5 12.5L16 9.5l3.6 1" />
+                {/* bucket */}
+                <path d="M19.6 10.5l1.8 3.4-1.6 1.2-2.8-1" />
               </g>
             </svg>
           </span>
           <span className="subtab-label">Industrial</span>
         </NavLink>
+
 
       </div>
 
