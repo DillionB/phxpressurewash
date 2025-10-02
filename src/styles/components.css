@@ -946,3 +946,28 @@ footer {
         padding-inline: 4%;
     }
 }
+/* Taller ticker row */
+:root {
+    --ticker-h: clamp(150px, 24vh, 220px);
+}
+
+/* Slightly more spacing so wider cards breathe */
+.ticker-track,
+.carousel-track {
+    gap: clamp(14px, 2vw, 20px);
+    padding: 10px 6%;
+}
+
+/* Wider cards (taller too since ticker grew) */
+.ticker-card,
+.service-card {
+    height: calc(var(--ticker-h) * 0.85); /* was 0.80 */
+    aspect-ratio: 2 / 1; /* was 16 / 9 */
+}
+
+/* Mobile tuning */
+@media (max-width: 640px) {
+    :root {
+        --ticker-h: clamp(140px, 26vh, 190px);
+    }
+}
