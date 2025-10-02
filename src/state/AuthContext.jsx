@@ -1,23 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const AuthCtx = createContext({ session: null, ready: false, signOut: async () => {}, hardSignOut: () => {} })
-export const useAuth = () => useContext(AuthCtx)
-
-export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null)
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    let sub
-    ;(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session || null)
-
-      // Nudge refresh
-      import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
-
 const AuthCtx = createContext(null)
 
 export function AuthProvider({ children }) {
@@ -28,7 +11,7 @@ export function AuthProvider({ children }) {
     let mounted = true
 
     ;(async () => {
-      // Canonical host guard to keep auth storage on one origin
+      // Force canonical host so Supabase session storage stays on one origin
       if (location.hostname === 'phxpressurewash.com') {
         location.replace(`https://www.phxpressurewash.com${location.pathname}${location.search}${location.hash}`)
         return
@@ -37,15 +20,14 @@ export function AuthProvider({ children }) {
       const { data: { session } } = await supabase.auth.getSession()
       let current = session || null
 
-      // Nudge token refresh on first load after an external redirect (Stripe, email link, etc.)
-      try {
-        if (current) {
+      // Nudge token refresh on first load after external redirects (Stripe/email link)
+      if (current) {
+        try {
           const { data, error } = await supabase.auth.refreshSession()
           if (!error && data?.session) current = data.session
+        } catch (e) {
+          console.warn('refreshSession failed', e?.message || e)
         }
-      } catch (e) {
-        // ignore; we fall back to whatever we have
-        console.warn('refreshSession failed', e?.message || e)
       }
 
       if (mounted) {
@@ -64,7 +46,7 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  // Robust sign out: try global; if it fails, clear local tokens anyway.
+  // Robust sign out with local fallback
   const signOut = async () => {
     try {
       await supabase.auth.signOut()
