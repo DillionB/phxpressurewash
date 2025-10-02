@@ -1560,13 +1560,11 @@ footer {
     .subtab-btn.active {
         color: var(--ink);
     }
-/* sizing already in your sheet */
-.subtabs-lg .subtab-ico svg {
-    width: 36px;
-    height: 36px;
-}
+
 .subtabs-lg .subtab-ico svg {
     color: var(--sun);
+    width: 36px;
+    height: 36px;
 }
     /* same orange as others */
     .subtabs-lg .subtab-ico svg * {
