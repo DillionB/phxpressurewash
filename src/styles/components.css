@@ -972,58 +972,61 @@ footer {
     }
 }
 /* === Ticker sizing: equal top/bottom spacing & slightly shorter cards === */
+/* === Ticker sizing (15% smaller cards) === */
 :root {
-    /* Existing value OK to keep; adjust if needed */
     --ticker-h: clamp(150px, 24vh, 220px);
-    --ticker-pad-y: 14px; /* vertical padding inside the ticker row */
+    --ticker-pad-y: 14px;
+    --ticker-card-scale: 0.85; 
 }
 
-/* ensure viewport height is explicit */
+/* viewport height (row height) */
 .ticker-viewport,
 .carousel-viewport {
     height: var(--ticker-h);
 }
 
-/* use the var for equal top/bottom padding */
+/* equal top/bottom spacing via vertical padding */
 .ticker-track,
 .carousel-track {
+    gap: clamp(14px, 2vw, 20px);
     padding: var(--ticker-pad-y) 6%;
+    height: 100%;
 }
 
-/* card height = viewport - top/bottom padding (equal space above/below) */
+/* card height = (row height - padding) * scale */
 .ticker-card,
 .service-card {
-    height: calc(var(--ticker-h) - (var(--ticker-pad-y) * 2));
-    aspect-ratio: 2 / 1; /* keeps them pleasantly wide */
+    height: calc((var(--ticker-h) - (var(--ticker-pad-y) * 2)) * var(--ticker-card-scale));
+    aspect-ratio: 2 / 
+    flex: 0 0 auto;
+    background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: grid;
 }
 
-/* Mobile tweak */
+/* keep your existing inner content sizing; optional: slightly tighter padding */
+.ticker-card-inner,
+.service-card-inner {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 8px;
+    padding: clamp(10px, 1.4vw, 14px);
+}
+
+/* Mobile tuning (optional) */
 @media (max-width: 640px) {
     :root {
         --ticker-h: clamp(140px, 26vh, 190px);
         --ticker-pad-y: 12px;
+        --ticker-card-scale: 0.85;
+    }
+
+    .ticker-track, .carousel-track {
+        gap: 12px;
+        padding-inline: 4%;
     }
 }
 
-/* === Services sub-tab icons: larger + clearer active outline === */
-.subtabs-lg .subtab-btn {
-    padding: 14px 18px;
-    gap: 12px;
-}
-
-.subtabs-lg .subtab-ico svg {
-    width: 36px;
-    height: 36px;
-    stroke-width: 1.75;
-}
-
-.subtabs-lg .subtab-label {
-    font-size: clamp(14px, 1.3vw, 16px);
-    font-weight: 700;
-}
-
-/* orange outline when active (to match header accent) */
-.subtabs-lg .subtab-btn.active {
-    border-color: var(--sun);
-    box-shadow: inset 0 0 0 2px var(--sun-2), 0 0 0 3px rgba(255,166,43,.15);
-}
