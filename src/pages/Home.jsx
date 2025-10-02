@@ -23,7 +23,7 @@ export default function Home() {
   return (
     // This container is two rows: (1) hero fills space, (2) ticker row
     <section id="home" className="wrap hero-screen">
-      <div className="hero-screen-main">
+      <div className="hero-screen-main" style={{ height: '50%' }}>
         <Hero />
       </div>
       <div className="hero-screen-ticker">
