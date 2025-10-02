@@ -1580,6 +1580,6 @@ footer {
     /* Industrial (excavator) — make it larger but keep the same color.
    Change the value below to whatever size you want (e.g., 82px). */
     .subtabs-lg .subtab-ico svg.excavator-ico {
-        --subtab-ico: 42px; 
+        --subtab-ico: 84px; 
     }
 
