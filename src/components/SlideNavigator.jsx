@@ -1,69 +1,89 @@
-
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { SLIDES } from '../config/slides'
 
+/**
+ * SlideNavigator
+ * - Intercepts wheel / swipe on the given scroll container
+ * - Advances through routeOrder
+ * - Includes nested steps for Services sub-tabs
+ */
 export default function SlideNavigator({ scrollContainerId = 'route-scroll' }) {
-  const navigate = useNavigate()
+  const routeOrder = [
+    '/',           // Home
+    '/shop/res',   // Services sub-tab 1
+    '/shop/com',   // Services sub-tab 2
+    '/shop/ind',   // Services sub-tab 3
+    '/account'     // Next main tab (add '/rewards' after this if you like)
+  ]
+
   const location = useLocation()
-  const busy = useRef(false)
-  const touchStartY = useRef(null)
+  const navigate = useNavigate()
+  const ticking = useRef(false)
 
-  const index = SLIDES.findIndex(s => s.path === location.pathname)
-
-  const go = (dir) => {
-    const next = dir > 0 ? Math.min(index + 1, SLIDES.length - 1) : Math.max(index - 1, 0)
-    if (next !== index) {
-      busy.current = true
-      navigate(SLIDES[next].path)
-      setTimeout(() => { busy.current = false }, 600)
-    }
-  }
+  // Normalize path to one of the known steps
+  const currentIndex = (() => {
+    const p = location.pathname
+    const i = routeOrder.indexOf(p)
+    if (i !== -1) return i
+    // Map unknown /shop/* to /shop/res index (closest step)
+    if (p.startsWith('/shop/')) return routeOrder.indexOf('/shop/res')
+    return 0
+  })()
 
   useEffect(() => {
-    const canRoute = (deltaY) => {
-      if (busy.current) return false
-      const scroller = document.getElementById(scrollContainerId)
-      if (!scroller) return true 
-      const { scrollTop, scrollHeight, clientHeight } = scroller
-      const atTop = scrollTop <= 0
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 1
-      if (deltaY > 0) return atBottom 
-      if (deltaY < 0) return atTop    
+    const el = document.getElementById(scrollContainerId) || window
+
+    const throttle = (fn, ms) => {
+      return (...args) => {
+        if (ticking.current) return
+        ticking.current = true
+        try { fn(...args) } finally {
+          setTimeout(() => { ticking.current = false }, ms)
+        }
+      }
     }
 
-    const onWheel = (e) => {
-      if (!canRoute(e.deltaY)) return
+    const go = (dir) => {
+      const next = currentIndex + dir
+      if (next < 0 || next >= routeOrder.length) return
+      navigate(routeOrder[next])
+    }
+
+    const onWheel = throttle((e) => {
+      // If user is scrolling inside a text area or input, let it pass
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : ''
+      if (tag === 'textarea' || tag === 'input' || tag === 'select') return
+
+      const dy = e.deltaY || 0
+      if (Math.abs(dy) < 25) return
       e.preventDefault()
-      go(e.deltaY > 0 ? +1 : -1)
-    }
+      if (dy > 0) go(1)
+      else go(-1)
+    }, 800)
 
-    const onKey = (e) => {
-      if (['ArrowDown', 'PageDown'].includes(e.key) && canRoute(1)) { e.preventDefault(); go(+1) }
-      if (['ArrowUp', 'PageUp'].includes(e.key) && canRoute(-1)) { e.preventDefault(); go(-1) }
-    }
-
-    const onTouchStart = (e) => { touchStartY.current = e.touches[0].clientY }
-    const onTouchEnd = (e) => {
-      if (touchStartY.current == null) return
-      const dy = touchStartY.current - e.changedTouches[0].clientY
+    // Basic touch swipe
+    let touchY = null
+    const onTouchStart = (e) => { touchY = e.touches[0].clientY }
+    const onTouchEnd = throttle((e) => {
+      if (touchY == null) return
+      const dy = (e.changedTouches?.[0]?.clientY ?? touchY) - touchY
+      touchY = null
       if (Math.abs(dy) < 40) return
-      if (!canRoute(dy)) return
-      go(dy > 0 ? +1 : -1)
-      touchStartY.current = null
-    }
+      if (dy < 0) go(1)
+      else go(-1)
+    }, 900)
 
-    window.addEventListener('wheel', onWheel, { passive: false })
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchend', onTouchEnd, { passive: true })
+
     return () => {
-      window.removeEventListener('wheel', onWheel)
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchend', onTouchEnd)
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchend', onTouchEnd)
     }
-  }, [index, navigate, scrollContainerId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, navigate, scrollContainerId])
 
   return null
 }
