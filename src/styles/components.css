@@ -1553,6 +1553,8 @@ footer {
     display: grid;
     gap: 6px
 }
+
+/* tabs */
 .subtab-btn {
     color: var(--muted);
 }
@@ -1561,23 +1563,23 @@ footer {
         color: var(--ink);
     }
 
+/* ---------- Services sub-tab icons ---------- */
+/* Base rule: all icons use the same color and a size controlled by a CSS var.
+   This lets us override size per-icon without fighting specificity. */
 .subtabs-lg .subtab-ico svg {
     color: var(--sun);
-    width: 36px;
-    height: 36px;
-}
-
-/* All service icons share the same color */
-.subtabs-lg .subtab-ico svg {
-    color: var(--sun);
+    width: var(--subtab-ico, 36px);
+    height: var(--subtab-ico, 36px);
+    display: block;
 }
 
     .subtabs-lg .subtab-ico svg * {
         vector-effect: non-scaling-stroke;
     }
 
-/* Slightly larger Industrial icon for visual balance */
-.subtabs-lg .excavator-ico {
-    width: 84px; /* was 36px on others */
-    height: 84px;
-}
+    /* Industrial (excavator) — make it larger but keep the same color.
+   Change the value below to whatever size you want (e.g., 82px). */
+    .subtabs-lg .subtab-ico svg.excavator-ico {
+        --subtab-ico: 42px; 
+    }
+

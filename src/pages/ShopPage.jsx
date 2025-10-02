@@ -56,27 +56,27 @@ export default function ShopPage(){
           className={`subtab-btn ${current === 'ind' ? 'active' : ''}`}
           aria-current={current === 'ind' ? 'page' : undefined}
         >
-          <span className="subtab-ico" aria-hidden="true">
-            {/* Excavator — upsized via class for better visual parity */}
-            <svg
-              className="excavator-ico"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="16" width="12" height="3" rx="1.4"/>
-              <circle cx="7" cy="19" r="1.7"/>
-              <circle cx="12" cy="19" r="1.7"/>
-              <path d="M6 16v-3.2c0-.9.7-1.6 1.6-1.6H11l1.6 3.2V16"/>
-              <path d="M8.2 11.3h2.2"/>
-              <path d="M12.6 11l3-2.8 3 .9 2 4"/>
-              <path d="M18.6 9l1.8 3.7-1.1 1.1-2.9-1"/>
-              <path d="M20.4 12.7l.9 2.4-2 .6"/>
-            </svg>
-          </span>
+         <span className="subtab-ico" aria-hidden="true">
+              <svg
+                className="excavator-ico"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="16" width="12" height="3" rx="1.4"/>
+                <circle cx="7" cy="19" r="1.7"/>
+                <circle cx="12" cy="19" r="1.7"/>
+                <path d="M6 16v-3.2c0-.9.7-1.6 1.6-1.6H11l1.6 3.2V16"/>
+                <path d="M8.2 11.3h2.2"/>
+                <path d="M12.6 11l3-2.8 3 .9 2 4"/>
+                <path d="M18.6 9l1.8 3.7-1.1 1.1-2.9-1"/>
+                <path d="M20.4 12.7l.9 2.4-2 .6"/>
+              </svg>
+            </span>
+
           <span className="subtab-label">Industrial</span>
         </NavLink>
 
