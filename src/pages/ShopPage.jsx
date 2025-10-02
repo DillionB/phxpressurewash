@@ -1,10 +1,22 @@
-import { NavLink, useParams } from 'react-router-dom'
+import React from 'react'
+import { NavLink, useParams, useNavigate } from 'react-router-dom'
+import Residential from './Residential'
+import Commercial from './Commercial'
+import Industrial from './Industrial'
+import CartSummary from '../components/CartSummary'
 
-export default function ServicesHeader() {
-  const { tab } = useParams() // 'res' | 'com' | 'ind'
+export default function ShopPage(){
+  const { tab } = useParams()
+  const navigate = useNavigate()
+  const current = ['res','com','ind'].includes(tab) ? tab : 'res'
 
   return (
-    <div className="subtabs subtabs-lg">
+    <section className="wrap" id="services-shop">
+      <h2 className="section-title">Services</h2>
+      <p className="section-sub">Choose a category below, add services to cart, then check out or request a quote.</p>
+
+      {/* Sub-tab bar */}
+      <div className="subtabs subtabs-lg">
       <NavLink
         to="/services/res"
         className={({ isActive }) => `subtab-btn ${isActive ? 'active' : ''}`}
@@ -45,7 +57,8 @@ export default function ServicesHeader() {
         <span className="subtab-label">Industrial</span>
       </NavLink>
     </div>
-    <div className="shop-layout">
+
+      <div className="shop-layout">
         <div className="shop-main">
           {current === 'res' && <Residential />}
           {current === 'com' && <Commercial />}
@@ -55,5 +68,6 @@ export default function ServicesHeader() {
           <CartSummary />
         </div>
       </div>
+    </section>
   )
 }
