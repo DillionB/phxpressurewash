@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { geocodeAddress, distanceMiles } from '../utils/geocode.js'
 import InlineScheduler from './InlineScheduler.jsx'
-import bg from '../assets/gb.png'
+import bg from '../assets/bg.png'
 
 const ORIGIN_ADDRESS = '25297 N 163rd Dr, Surprise, AZ'
 const RADIUS_MILES = 15
