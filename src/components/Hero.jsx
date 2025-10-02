@@ -37,33 +37,40 @@ export default function Hero() {
     return () => { mounted = false }
   }, [])
 
-  // Subtle parallax (anchored to top)
+  // Subtle parallax (can move up under header; default raised by ~20px)
   useEffect(() => {
     if (reduceMotion) return
     const wrap = wrapRef.current
     const bgEl = bgRef.current
     if (!wrap || !bgEl) return
 
-    const maxX = 14, maxY = 10
-    let raf = 0, targetX = 0, targetY = 0, curX = 0, curY = 0
+    const BASE_Y = -20      // raise default Y so moving down never shows a gap
+    const maxX  = 14        // px
+    const maxY  = 28        // px (allow more vertical travel)
+    let raf = 0
+    let targetX = 0, targetY = BASE_Y
+    let curX = 0, curY = BASE_Y
 
     const tick = () => {
       curX += (targetX - curX) * 0.12
       curY += (targetY - curY) * 0.12
-      bgEl.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(1.06)`
+      bgEl.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(1.08)`
       raf = requestAnimationFrame(tick)
     }
 
     const onMove = (e) => {
       const rect = wrap.getBoundingClientRect()
-      const nx = (e.clientX - rect.left) / rect.width - 0.5
-      const ny = (e.clientY - rect.top) / rect.height - 0.5
+      const nx = (e.clientX - rect.left) / rect.width  - 0.5 // -0.5..0.5
+      const ny = (e.clientY - rect.top)  / rect.height - 0.5
+      // invert so background “lags” content
       targetX = -nx * maxX
-      // keep the TOP of the image always visible (only move down)
-      targetY = Math.max(0, -ny * maxY)
+      targetY = BASE_Y + (-ny * maxY)
     }
 
-    const onLeave = () => { targetX = 0; targetY = 0 }
+    const onLeave = () => {
+      targetX = 0
+      targetY = BASE_Y
+    }
 
     wrap.addEventListener('mousemove', onMove)
     wrap.addEventListener('mouseleave', onLeave)
