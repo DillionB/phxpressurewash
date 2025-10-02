@@ -1251,3 +1251,50 @@ footer {
 .hero-screen-ticker {
     height: var(--ticker-h)
 }
+/* === Fill the hero row exactly (no blank space above/below) === */
+
+/* The hero row itself */
+.hero-screen {
+    /* you already have the grid-template-rows math; keep it */
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+}
+
+/* Make the row's inner wrapper occupy the full row height */
+.hero-screen-main {
+    min-height: 0; /* allow the child to size itself */
+    display: grid;
+}
+
+    /* Your .wrap around <Hero/> must stretch to full height */
+    .hero-screen-main > .wrap {
+        height: 100%;
+        display: grid;
+    }
+
+    /* The parallax container (hero-with-bg) must also stretch */
+    .hero-screen-main .hero-with-bg {
+        height: 100%;
+        display: grid; /* so the .hero-grid can center inside */
+    }
+
+    /* Ensure the actual hero layout fills its container and centers nicely */
+    .hero-screen-main .hero-grid {
+        min-height: 100%;
+        display: grid;
+        align-content: center; /* vertically center content within full height */
+    }
+
+/* Trim any leftover internal spacing that could push content */
+.hero-screen .hero {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Prevent top/bottom margin collapse from first/last elements */
+.hero-screen .hero-grid > *:first-child {
+    margin-top: 0;
+}
+
+.hero-screen .hero-grid > *:last-child {
+    margin-bottom: 0;
+}
