@@ -6,7 +6,7 @@ export default function Header(){
   const navigate = useNavigate()
   const location = useLocation()
 
-  const isServicesActive = location.pathname.startsWith('/shop/')
+  const isServicesActive = location.pathname.startsWith('/services/')
 
   const gotoHomeAnchor = (id) => (e) => {
     e.preventDefault()
@@ -34,28 +34,29 @@ export default function Header(){
         </Link>
 
         <nav className="navlinks" aria-label="Primary">
-          {/* NEW: Home tab */}
           <NavLink to="/" end className={({isActive}) => isActive ? 'active' : undefined}>
             Home
           </NavLink>
 
-          {/* NEW: Single Services tab (covers /shop/res|com|ind) */}
-          <a
-            href="/shop/res"
-            onClick={(e) => { e.preventDefault(); navigate('/shop/res') }}
-            className={isServicesActive ? 'active' : undefined}
+          <NavLink
+            to="/services/res"
+            className={() => (isServicesActive ? 'active' : undefined)}
+            onClick={(e) => {
+              if (location.pathname !== '/services/res') {
+                e.preventDefault()
+                navigate('/services/res')
+              }
+            }}
           >
             Services
-          </a>
+          </NavLink>
 
-          {/* Home page in-page sections */}
           <a href="/#services" onClick={gotoHomeAnchor('services')}>Overview</a>
           <a href="/#coverage" onClick={gotoHomeAnchor('coverage')}>Service Areas</a>
           <a href="/#gallery" onClick={gotoHomeAnchor('gallery')}>Gallery</a>
           <a href="/#reviews" onClick={gotoHomeAnchor('reviews')}>Reviews</a>
           <a href="/#contact" onClick={gotoHomeAnchor('contact')}>Contact</a>
 
-          {/* Account */}
           <NavLink to="/account" className={({isActive}) => isActive ? 'active' : undefined}>
             Account
           </NavLink>
