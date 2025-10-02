@@ -1553,3 +1553,15 @@ footer {
     display: grid;
     gap: 6px
 }
+.subtab-btn {
+    color: var(--muted);
+}
+
+    .subtab-btn.active {
+        color: var(--ink);
+    }
+/* sizing already in your sheet */
+.subtabs-lg .subtab-ico svg {
+    width: 36px;
+    height: 36px;
+}
