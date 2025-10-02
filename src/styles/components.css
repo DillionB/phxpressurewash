@@ -1566,7 +1566,18 @@ footer {
     width: 36px;
     height: 36px;
 }
-    /* same orange as others */
+
+/* All service icons share the same color */
+.subtabs-lg .subtab-ico svg {
+    color: var(--sun);
+}
+
     .subtabs-lg .subtab-ico svg * {
         vector-effect: non-scaling-stroke;
     }
+
+/* Slightly larger Industrial icon for visual balance */
+.subtabs-lg .excavator-ico {
+    width: 42px; /* was 36px on others */
+    height: 42px;
+}

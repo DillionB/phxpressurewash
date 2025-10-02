@@ -57,8 +57,9 @@ export default function ShopPage(){
           aria-current={current === 'ind' ? 'page' : undefined}
         >
           <span className="subtab-ico" aria-hidden="true">
-            {/* Excavator – same visual weight & color as other icons */}
+            {/* Excavator — upsized via class for better visual parity */}
             <svg
+              className="excavator-ico"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -66,16 +67,11 @@ export default function ShopPage(){
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              {/* tracks */}
               <rect x="3" y="16" width="12" height="3" rx="1.4"/>
               <circle cx="7" cy="19" r="1.7"/>
               <circle cx="12" cy="19" r="1.7"/>
-
-              {/* body / cab */}
               <path d="M6 16v-3.2c0-.9.7-1.6 1.6-1.6H11l1.6 3.2V16"/>
               <path d="M8.2 11.3h2.2"/>
-
-              {/* boom + stick + bucket */}
               <path d="M12.6 11l3-2.8 3 .9 2 4"/>
               <path d="M18.6 9l1.8 3.7-1.1 1.1-2.9-1"/>
               <path d="M20.4 12.7l.9 2.4-2 .6"/>
@@ -83,10 +79,6 @@ export default function ShopPage(){
           </span>
           <span className="subtab-label">Industrial</span>
         </NavLink>
-
-
-
-
 
       </div>
 
