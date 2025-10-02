@@ -1383,3 +1383,159 @@ footer {
         padding-inline: 4%;
     }
 }
+/* ===== Home screen proportions: larger ticker, still no page scroll ===== */
+:root {
+    /* tune this between 0.5 and 0.7 for how tall you want the ticker row */
+    --home-ticker-ratio: 0.60;
+}
+
+/* SiteLayout sets --header-h / --footer-h; compute available */
+.hero-screen {
+    --avail: calc(100dvh - var(--header-h) - var(--footer-h));
+    display: grid;
+    grid-template-rows: calc(var(--avail) * (1 - var(--home-ticker-ratio))) calc(var(--avail) * var(--home-ticker-ratio));
+    min-height: var(--avail);
+    padding: 0 !important;
+}
+
+.hero-screen-main,
+.hero-screen-ticker {
+    min-height: 0;
+}
+
+/* tighten hero so it never forces scroll */
+.hero-screen-main {
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+}
+
+.hero-screen .hero {
+    padding: 28px 0 16px;
+}
+
+.hero-screen .hero-grid {
+    align-items: center;
+    gap: clamp(12px,2vw,22px);
+}
+
+.hero-screen .hero h1 {
+    font-size: clamp(30px, 4.8vw, 56px);
+    margin-bottom: 10px;
+}
+
+.hero-screen .hero p {
+    margin: 6px 0 14px;
+}
+
+/* ===== Services Ticker as big rectangular cards (infinite) ===== */
+.ticker {
+    height: 100%;
+    background: linear-gradient(180deg,#0f2626,#0b1f1f);
+    border-top: 1px solid var(--line);
+}
+
+.ticker-viewport {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    /* subtle side fade so items appear to enter/exit */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
+}
+
+.ticker-track {
+    display: flex;
+    gap: clamp(16px, 2vw, 24px);
+    align-items: stretch;
+    height: 100%;
+    padding: 12px 6%;
+    width: max-content;
+    animation: ticker-loop 32s linear infinite;
+}
+
+.ticker:hover .ticker-track {
+    animation-play-state: paused;
+}
+
+@keyframes ticker-loop {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+    /* we duplicated the list */
+}
+
+/* BIG rectangular cards, same vibe as .service */
+.ticker-card {
+    height: calc(100% - 12px); /* leave a little breathing room */
+    aspect-ratio: 16 / 9; /* wide card */
+    flex: 0 0 auto;
+    background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: grid;
+}
+
+.ticker-card-inner {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 10px;
+    padding: clamp(12px, 2vw, 18px);
+}
+
+.ticker-card .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    background: #102727;
+    font-size: clamp(12px,1.2vw,14px);
+    width: max-content;
+}
+
+.ticker-card h3 {
+    margin: 0;
+    font-size: clamp(18px, 2.2vw, 24px);
+    line-height: 1.15;
+}
+
+.ticker-card .ti-copy {
+    margin: 0;
+    color: var(--muted);
+    font-size: clamp(14px, 1.4vw, 16px);
+}
+/* optional image area; replace with <img> later */
+.ticker-card .ti-img {
+    margin-top: 8px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(31,110,110,.12), rgba(31,110,110,.04));
+    min-height: 0;
+}
+
+/* responsiveness: slightly reduce ticker share on small screens */
+@media (max-width: 960px) {
+    :root {
+        --home-ticker-ratio: 0.55;
+    }
+}
+
+@media (max-width: 640px) {
+    :root {
+        --home-ticker-ratio: 0.50;
+    }
+
+    .ticker-track {
+        gap: 12px;
+        padding-inline: 4%;
+    }
+}
