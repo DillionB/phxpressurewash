@@ -313,3 +313,18 @@ footer{border-top:1px solid var(--line); background:linear-gradient(180deg, #0d2
     border: 0;
     padding: 0;
 }
+
+/* in styles/theme.css (or global) */
+html, body, #root {
+    height: 100%;
+}
+
+/* route content wrapper (the scrollable area between header and footer) */
+#route-scroll {
+    scroll-behavior: smooth; /* nice anchor scrolling on Home */
+}
+
+/* Ensure large sections don’t push beyond the scroll container unintentionally */
+.wrap.hero, .wrap, section.wrap {
+    /* your existing widths/margins are fine */
+}
