@@ -6,6 +6,8 @@ export default function Header(){
   const navigate = useNavigate()
   const location = useLocation()
 
+  const isServicesActive = location.pathname.startsWith('/shop/')
+
   const gotoHomeAnchor = (id) => (e) => {
     e.preventDefault()
     if (location.pathname !== '/') {
@@ -36,21 +38,14 @@ export default function Header(){
             Home
           </NavLink>
 
-          {/* Services tab stays active for ANY /services/* route */}
-          <NavLink
-            to="/services"
-            end={false}
-            className={({isActive}) => isActive ? 'active' : undefined}
-            onClick={(e) => {
-              // If you're not already on a /services/* route, send to default sub-tab
-              if (!location.pathname.startsWith('/services/')) {
-                e.preventDefault()
-                navigate('/services/res')
-              }
-            }}
+          {/* Services points to /shop/res and is active for ANY /shop/* */}
+          <a
+            href="/shop/res"
+            onClick={(e) => { e.preventDefault(); navigate('/shop/res') }}
+            className={isServicesActive ? 'active' : undefined}
           >
             Services
-          </NavLink>
+          </a>
 
           <a href="/#services" onClick={gotoHomeAnchor('services')}>Overview</a>
           <a href="/#coverage" onClick={gotoHomeAnchor('coverage')}>Service Areas</a>
