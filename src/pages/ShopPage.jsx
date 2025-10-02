@@ -51,18 +51,18 @@ export default function ShopPage(){
           <span className="subtab-label">Commercial</span>
         </NavLink>
 
-       <NavLink
-  to="/services/ind"
-  className={`subtab-btn ${current === 'ind' ? 'active' : ''}`}
-  aria-current={current === 'ind' ? 'page' : undefined}
+      <NavLink
+          to="/services/ind"
+          className={`subtab-btn ${current === 'ind' ? 'active' : ''}`}
+          aria-current={current === 'ind' ? 'page' : undefined}
         >
           <span className="subtab-ico" aria-hidden="true">
-            {/* Excavator icon (inherits color) */}
+            {/* Excavator icon – matches tab color via currentColor */}
             <svg
               viewBox="0 0 463 463"
+              fill="currentColor"
               stroke="currentColor"
-              fill="none"
-              strokeWidth="22"
+              strokeWidth="18"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -93,6 +93,7 @@ export default function ShopPage(){
           </span>
           <span className="subtab-label">Industrial</span>
         </NavLink>
+
 
 
 
