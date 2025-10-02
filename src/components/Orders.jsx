@@ -6,6 +6,13 @@ export default function Orders({ compact = false }) {
   const [session, setSession] = useState(null)
 
   useEffect(() => {
+  const reload = () => loadOrders()
+  window.addEventListener('orders:refresh', reload)
+  return () => window.removeEventListener('orders:refresh', reload)
+}, [])
+
+
+  useEffect(() => {
     const init = async () => {
       const { data } = await supabase.auth.getSession()
       const ses = data?.session || null
