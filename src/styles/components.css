@@ -871,7 +871,7 @@ footer {
 /* Card size = % of ticker row */
 .ticker-card,
 .service-card {
-    height: calc(var(--ticker-h) * 0.80); 
+    height: calc(var(--ticker-h) * 0.65); 
     aspect-ratio: 16 / 9;
     flex: 0 0 auto;
     background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
@@ -901,7 +901,7 @@ footer {
     border-radius: 999px;
     color: var(--muted);
     background: #102727;
-    font-size: clamp(10px, 1.1vw, 12px);
+    font-size: clamp(10px, 1.1vw, 14px);
     width: max-content;
 }
 
