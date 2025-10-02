@@ -1565,3 +1565,10 @@ footer {
     width: 36px;
     height: 36px;
 }
+.subtabs-lg .subtab-ico svg {
+    color: var(--sun);
+}
+    /* same orange as others */
+    .subtabs-lg .subtab-ico svg * {
+        vector-effect: non-scaling-stroke;
+    }
