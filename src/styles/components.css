@@ -971,3 +971,59 @@ footer {
         --ticker-h: clamp(140px, 26vh, 190px);
     }
 }
+/* === Ticker sizing: equal top/bottom spacing & slightly shorter cards === */
+:root {
+    /* Existing value OK to keep; adjust if needed */
+    --ticker-h: clamp(150px, 24vh, 220px);
+    --ticker-pad-y: 14px; /* vertical padding inside the ticker row */
+}
+
+/* ensure viewport height is explicit */
+.ticker-viewport,
+.carousel-viewport {
+    height: var(--ticker-h);
+}
+
+/* use the var for equal top/bottom padding */
+.ticker-track,
+.carousel-track {
+    padding: var(--ticker-pad-y) 6%;
+}
+
+/* card height = viewport - top/bottom padding (equal space above/below) */
+.ticker-card,
+.service-card {
+    height: calc(var(--ticker-h) - (var(--ticker-pad-y) * 2));
+    aspect-ratio: 2 / 1; /* keeps them pleasantly wide */
+}
+
+/* Mobile tweak */
+@media (max-width: 640px) {
+    :root {
+        --ticker-h: clamp(140px, 26vh, 190px);
+        --ticker-pad-y: 12px;
+    }
+}
+
+/* === Services sub-tab icons: larger + clearer active outline === */
+.subtabs-lg .subtab-btn {
+    padding: 14px 18px;
+    gap: 12px;
+}
+
+.subtabs-lg .subtab-ico svg {
+    width: 36px;
+    height: 36px;
+    stroke-width: 1.75;
+}
+
+.subtabs-lg .subtab-label {
+    font-size: clamp(14px, 1.3vw, 16px);
+    font-weight: 700;
+}
+
+/* orange outline when active (to match header accent) */
+.subtabs-lg .subtab-btn.active {
+    border-color: var(--sun);
+    box-shadow: inset 0 0 0 2px var(--sun-2), 0 0 0 3px rgba(255,166,43,.15);
+}
