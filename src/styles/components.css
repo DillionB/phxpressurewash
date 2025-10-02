@@ -78,10 +78,10 @@
     height: 100%;
     display: grid;
     align-items: center;
-    padding: 24px 0; /* tighter so we never overflow */
+    padding: 24px 0;
     box-sizing: border-box;
 }
-/* If your Hero component renders a .hero inside, reduce padding in this mode */
+/* Reduce default hero padding inside hero-screen */
 .hero-screen .hero {
     padding: 24px 0;
 }
@@ -290,7 +290,7 @@ textarea {
     .inline-check input {
         flex: 1 1 420px;
         width: auto;
-        min-width: 260px; /* override the global 100% */
+        min-width: 260px;
     }
 
     .inline-check .cta {
@@ -436,7 +436,7 @@ textarea {
     opacity: .9;
 }
 
-/* Old wide checkbox tiles replaced by chips — keep if you still use these blocks */
+/* Older wide checkbox tiles (keep if still used) */
 .addon-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(180px,1fr));
@@ -547,7 +547,7 @@ textarea {
         }
 
 /* ===========================
-   SERVICES SUB-TAB BAR
+   SERVICES SUB-TAB BAR (base)
    =========================== */
 .subtabs {
     display: flex;
@@ -581,6 +581,120 @@ textarea {
             box-shadow: 0 0 0 3px rgba(44,140,140,.25) inset;
         }
 
+    /* ===========================
+   SERVICES PROMO SUB-TABS (Large, centered buttons with icons)
+   (merged + enhanced + strong orange active)
+   =========================== */
+    .subtabs.subtabs-lg {
+        display: flex;
+        justify-content: center;
+        gap: clamp(14px, 2.4vw, 24px);
+        margin: 22px 0 30px;
+        flex-wrap: wrap;
+        position: relative;
+    }
+
+    .subtabs .subtab-btn {
+        --pad-x: 22px;
+        --pad-y: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(10px, 1.4vw, 14px);
+        min-width: clamp(240px, 30vw, 360px);
+        padding: var(--pad-y) var(--pad-x);
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        text-decoration: none;
+        text-align: center;
+        background: linear-gradient(180deg, #102727, #0c2020);
+        color: var(--ink);
+        box-shadow: 0 6px 22px rgba(0,0,0,.28);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+        position: relative;
+    }
+
+        .subtabs .subtab-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--teal);
+            background: linear-gradient(180deg, #133030, #0f2626);
+            box-shadow: 0 10px 28px rgba(0,0,0,.32);
+        }
+
+        .subtabs .subtab-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44,140,140,.35), 0 10px 28px rgba(0,0,0,.32);
+        }
+
+        .subtabs .subtab-btn.active {
+            border-color: var(--sun);
+            background: linear-gradient(180deg, rgba(31,110,110,.22), rgba(10,26,26,.88));
+            box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 35%, transparent), 0 0 0 3px color-mix(in srgb, var(--sun) 24%, transparent), 0 12px 32px rgba(0,0,0,.38);
+            transform: translateY(-1px);
+        }
+
+            .subtabs .subtab-btn.active::after {
+                content: "";
+                position: absolute;
+                left: 16px;
+                right: 16px;
+                bottom: 8px;
+                height: 6px;
+                border-radius: 999px;
+                background: linear-gradient(90deg, var(--sun), #ffd37a);
+                opacity: .98;
+                box-shadow: 0 2px 8px color-mix(in srgb, var(--sun) 40%, transparent);
+            }
+
+            .subtabs .subtab-btn.active:hover {
+                transform: translateY(-2px);
+                box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 40%, transparent), 0 0 0 4px color-mix(in srgb, var(--sun) 18%, transparent), 0 14px 34px rgba(0,0,0,.4);
+            }
+
+    /* Icon pod */
+    .subtabs .subtab-ico {
+        display: inline-flex;
+        width: clamp(44px, 6vw, 72px);
+        height: clamp(44px, 6vw, 72px);
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: radial-gradient(88% 88% at 50% 50%, rgba(255,199,92,.18), rgba(255,199,92,.06));
+        box-shadow: inset 0 0 0 1px rgba(255,199,92,.45), 0 6px 18px rgba(0,0,0,.25);
+    }
+
+        .subtabs .subtab-ico svg {
+            width: 70%;
+            height: 70%;
+        }
+
+            .subtabs .subtab-ico svg path,
+            .subtabs .subtab-ico svg polyline,
+            .subtabs .subtab-ico svg line {
+                stroke: var(--sun);
+                fill: none;
+                stroke-width: 2.2;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+
+    .subtabs .subtab-label {
+        font-weight: 900;
+        letter-spacing: .2px;
+        font-size: clamp(15px, 1.2vw, 18px);
+    }
+
+@media (max-width: 720px) {
+    .subtabs.subtabs-lg {
+        justify-content: stretch;
+    }
+
+    .subtabs .subtab-btn {
+        min-width: min(100%, 520px);
+        width: 100%;
+    }
+}
+
 /* ===========================
    FOOTER
    =========================== */
@@ -598,7 +712,7 @@ footer {
 }
 
 /* ===========================
-   RESPONSIVE
+   RESPONSIVE (general)
    =========================== */
 @media (max-width: 960px) {
     .hero-grid {
@@ -632,764 +746,25 @@ footer {
 }
 
 /* ===========================
-   SERVICES PROMO SUB-TABS (Large, centered buttons with icons)
+   ROUTE / HOME SCREEN LAYOUT + TICKER (final, deduped)
    =========================== */
-.subtabs.subtabs-lg {
-    display: flex;
-    justify-content: center;
-    gap: clamp(12px, 2vw, 20px);
-    margin: 18px 0 28px;
-    flex-wrap: wrap;
-}
-
-.subtabs .subtab-btn {
-    --pad-x: 18px;
-    --pad-y: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-width: clamp(200px, 24vw, 280px);
-    padding: var(--pad-y) var(--pad-x);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    text-decoration: none;
-    text-align: center;
-    background: linear-gradient(180deg, #102727, #0c2020);
-    color: var(--ink);
-    box-shadow: 0 4px 18px rgba(0,0,0,.25);
-    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-}
-
-    .subtabs .subtab-btn:hover {
-        transform: translateY(-1px);
-        border-color: var(--teal);
-        background: linear-gradient(180deg, #132e2e, #0f2626);
-        box-shadow: 0 8px 26px rgba(0,0,0,.28);
-    }
-
-    .subtabs .subtab-btn:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(44,140,140,.35), 0 8px 26px rgba(0,0,0,.28);
-    }
-
-    .subtabs .subtab-btn.active {
-        border-color: var(--teal-soft);
-        background: linear-gradient(180deg, rgba(31,110,110,.22), rgba(10,26,26,.86));
-        box-shadow: inset 0 -2px 0 var(--sun), 0 8px 28px rgba(0,0,0,.32);
-    }
-
-/* Icon + label */
-.subtabs .subtab-ico {
-    display: inline-flex;
-    width: clamp(28px, 3.6vw, 40px);
-    height: clamp(28px, 3.6vw, 40px);
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgba(255,199,92,.14), rgba(255,199,92,.06));
-    box-shadow: inset 0 0 0 1px rgba(255,199,92,.35);
-}
-
-    .subtabs .subtab-ico svg {
-        width: 70%;
-        height: 70%;
-        stroke: var(--sun);
-        fill: none;
-        stroke-width: 1.8;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-
-.subtabs .subtab-label {
-    font-weight: 800;
-    letter-spacing: .2px;
-    text-transform: none;
-}
-
-/* Mobile: allow full-width buttons when space is tight */
-@media (max-width: 720px) {
-    .subtabs.subtabs-lg {
-        justify-content: stretch;
-    }
-
-    .subtabs .subtab-btn {
-        min-width: min(100%, 420px);
-        width: 100%;
-    }
-}
-
-
-/* ===========================
-   SERVICES PROMO SUB-TABS (Bigger icons + active highlight)
-   =========================== */
-.subtabs.subtabs-lg {
-    display: flex;
-    justify-content: center;
-    gap: clamp(14px, 2.4vw, 24px);
-    margin: 22px 0 30px;
-    flex-wrap: wrap;
-    position: relative;
-}
-
-.subtabs .subtab-btn {
-    --pad-x: 22px;
-    --pad-y: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(10px, 1.4vw, 14px);
-    min-width: clamp(240px, 30vw, 360px);
-    padding: var(--pad-y) var(--pad-x);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    text-decoration: none;
-    text-align: center;
-    background: linear-gradient(180deg, #102727, #0c2020);
-    color: var(--ink);
-    box-shadow: 0 6px 22px rgba(0,0,0,.28);
-    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-    position: relative; /* for active underbar */
-}
-
-    .subtabs .subtab-btn:hover {
-        transform: translateY(-2px);
-        border-color: var(--teal);
-        background: linear-gradient(180deg, #133030, #0f2626);
-        box-shadow: 0 10px 28px rgba(0,0,0,.32);
-    }
-
-    .subtabs .subtab-btn:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(44,140,140,.35), 0 10px 28px rgba(0,0,0,.32);
-    }
-
-    /* Active state + UNDERBAR highlight (matches header vibe) */
-    .subtabs .subtab-btn.active {
-        border-color: var(--teal-soft);
-        background: linear-gradient(180deg, rgba(31,110,110,.22), rgba(10,26,26,.86));
-        box-shadow: inset 0 -2px 0 var(--sun), 0 10px 30px rgba(0,0,0,.36);
-    }
-
-        .subtabs .subtab-btn.active::after {
-            content: "";
-            position: absolute;
-            left: 18px;
-            right: 18px;
-            bottom: 10px;
-            height: 4px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, var(--sun), var(--sun-2));
-            opacity: .95;
-        }
-
-/* ICON pod — bigger, with subtle glow */
-.subtabs .subtab-ico {
-    display: inline-flex;
-    width: clamp(44px, 6vw, 72px);
-    height: clamp(44px, 6vw, 72px);
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    background: radial-gradient(88% 88% at 50% 50%, rgba(255,199,92,.18), rgba(255,199,92,.06));
-    box-shadow: inset 0 0 0 1px rgba(255,199,92,.45), 0 6px 18px rgba(0,0,0,.25);
-}
-
-    .subtabs .subtab-ico svg {
-        width: 70%;
-        height: 70%;
-    }
-
-        /* Thicker strokes for readability */
-        .subtabs .subtab-ico svg path,
-        .subtabs .subtab-ico svg polyline,
-        .subtabs .subtab-ico svg line {
-            stroke: var(--sun);
-            fill: none;
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-/* Label bigger + bold */
-.subtabs .subtab-label {
-    font-weight: 900;
-    letter-spacing: .2px;
-    font-size: clamp(15px, 1.2vw, 18px);
-}
-
-/* Mobile: allow full-width buttons */
-@media (max-width: 720px) {
-    .subtabs.subtabs-lg {
-        justify-content: stretch;
-    }
-
-    .subtabs .subtab-btn {
-        min-width: min(100%, 520px);
-        width: 100%;
-    }
-}
-
-
-/* ==== SERVICES SUB-TABS: STRONG ORANGE ACTIVE STATE ==== */
-/* Stronger base border so the active change is obvious */
-.subtabs.subtabs-lg .subtab-btn {
-    border-width: 2px; /* was 1px */
-}
-
-    /* Active = Phoenix orange outline + subtle glow + crisper underbar */
-    .subtabs.subtabs-lg .subtab-btn.active {
-        border-color: var(--sun); /* stylistically matching orange */
-        background: linear-gradient(180deg, rgba(31,110,110,.22), rgba(10,26,26,.88));
-        box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 35%, transparent), 0 0 0 3px color-mix(in srgb, var(--sun) 24%, transparent), 0 12px 32px rgba(0,0,0,.38);
-        transform: translateY(-1px);
-    }
-
-        /* Make the icon pod look “selected” too */
-        .subtabs.subtabs-lg .subtab-btn.active .subtab-ico {
-            box-shadow: inset 0 0 0 2px var(--sun), 0 10px 22px rgba(0,0,0,.28);
-            background: radial-gradient(88% 88% at 50% 50%, color-mix(in srgb, var(--sun) 26%, transparent), rgba(255,199,92,.08));
-        }
-
-        /* Thicker, brighter underbar highlight (matches header vibe) */
-        .subtabs.subtabs-lg .subtab-btn.active::after {
-            left: 16px;
-            right: 16px;
-            bottom: 8px;
-            height: 6px; /* thicker */
-            background: linear-gradient(90deg, var(--sun), #ffd37a);
-            opacity: .98;
-            box-shadow: 0 2px 8px color-mix(in srgb, var(--sun) 40%, transparent);
-        }
-
-        /* Hover should not overpower active, but still feel responsive */
-        .subtabs.subtabs-lg .subtab-btn.active:hover {
-            transform: translateY(-2px);
-            box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 40%, transparent), 0 0 0 4px color-mix(in srgb, var(--sun) 18%, transparent), 0 14px 34px rgba(0,0,0,.4);
-        }
-
-/* ---- Screen math for routes ---- */
-:root {
-    /* Tune these if your header/footer heights differ */
-    --header-h: 72px;
-    --footer-h: 240px;
-}
-
-/* The page content area between header and footer */
-#route-scroll {
-    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
-    overflow: auto;
-}
-
-    /* Home disables scrolling entirely */
-    #route-scroll.no-scroll {
-        overflow: hidden;
-    }
-
-/* ---- Home hero screen layout ---- */
-/* Two rows: (1) hero fills, (2) ticker fixed height */
-.hero-screen {
-    display: grid;
-    grid-template-rows: 1fr auto;
-    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
-    padding: 0; /* remove extra vertical padding on Home wrapper */
-}
-
-/* Inner wrappers for clarity (optional) */
-.hero-screen-main {
-    display: grid;
-    align-items: center; /* vertically center the hero grid */
-    padding: 24px 0 8px; /* keep it tight so it never forces scroll */
-}
-
-/* Make the hero more compact on Home */
-.hero-screen .hero-grid {
-    gap: clamp(14px, 2.2vw, 26px);
-}
-
-.hero-screen .hero h1 {
-    font-size: clamp(32px, 5vw, 60px);
-    margin-bottom: 12px;
-}
-
-.hero-screen .hero p {
-    margin: 8px 0 16px;
-}
-
-.hero-screen .inline-check {
-    margin: 8px 0 6px;
-}
-
-.hero-screen .scheduler {
-    margin-top: 12px;
-}
-
-/* ---- Services Ticker ---- */
-.hero-screen-ticker {
-    padding: 8px 0 12px;
-}
-
-.ticker {
-    position: relative;
-    overflow: hidden;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    background: linear-gradient(180deg, #0f2626, #0b1f1f);
-}
-
-.ticker-track {
-    display: flex;
-    gap: 12px;
-    padding: 10px 6px;
-    width: max-content;
-    animation: ticker-scroll 24s linear infinite;
-}
-
-/* Pause on hover if desired */
-.ticker:hover .ticker-track {
-    animation-play-state: paused;
-}
-
-@keyframes ticker-scroll {
-    from {
-        transform: translateX(0);
-    }
-
-    to {
-        transform: translateX(-50%);
-    }
-    /* because we duplicated the list */
-}
-
-.ticker-item {
-    display: grid;
-    align-content: center;
-    padding: 10px 14px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: #102727;
-    min-width: 280px; /* consistent pill width */
-    box-shadow: var(--shadow);
-    white-space: nowrap;
-}
-
-.ti-badge {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 4px;
-}
-
-.ti-title {
-    font-weight: 700;
-    color: var(--ink);
-}
-
-/* Make ticker tighter on small screens */
-@media (max-width: 640px) {
-    .ticker-item {
-        min-width: 220px;
-    }
-}
-/* --- Sizes you can tweak --- */
 :root {
     --header-h: 72px;
     --footer-h: 240px;
-    --ticker-h: 72px; /* height of the one-row services carousel */
-}
-
-/* Route content area between header/footer */
-#route-scroll {
-    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
-    overflow: auto;
-}
-
-    /* Home disables scroll entirely */
-    #route-scroll.no-scroll {
-        overflow: hidden;
-    }
-
-/* Home screen: two rows (hero + ticker) with fixed ticker height */
-.hero-screen {
-    display: grid;
-    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
-    grid-template-rows: calc(100% - var(--ticker-h)) var(--ticker-h);
-    padding: 0; /* keep tight so nothing pushes total height */
-}
-
-/* Hero row layout */
-.hero-screen-main {
-    display: grid;
-    align-items: center; /* vertically center hero content */
-    overflow: hidden; /* avoid creeping overflow */
-    padding: 10px 0 0;
-}
-
-/* Make hero more compact on Home */
-.hero-screen .hero-grid {
-    gap: clamp(10px, 2vw, 18px);
-}
-
-.hero-screen .hero h1 {
-    font-size: clamp(28px, 4.5vw, 48px);
-    margin-bottom: 10px;
-}
-
-.hero-screen .hero p {
-    margin: 6px 0 12px;
-}
-
-.hero-screen .inline-check {
-    margin: 6px 0 4px;
-}
-
-.hero-screen .scheduler {
-    margin-top: 10px;
-}
-
-/* Ticker row locked height */
-.hero-screen-ticker {
-    height: var(--ticker-h);
-    display: grid;
-    align-items: center;
-}
-
-/* Ensure the ticker content fits within its row */
-.ticker {
-    height: 100%;
-    display: grid;
-    align-items: center;
-}
-
-.ticker-track {
-    padding: 0 6px;
-}
-/* Dynamic sizes are written by SiteLayout effect */
-:root {
-    --header-h: 72px;
-    --footer-h: 240px;
-    --ticker-h: 64px; /* try 56–72px if you want tighter/looser */
-}
-
-/* The scrollable area for normal pages */
-#route-scroll {
-    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
-    overflow: auto;
-}
-
-    /* Home disables page scroll entirely */
-    #route-scroll.no-scroll {
-        overflow: hidden;
-    }
-
-/* Home screen: exact height between header and footer */
-.hero-screen {
-    height: calc(100dvh - var(--header-h) - var(--footer-h));
-    display: grid;
-    grid-template-rows: 1fr var(--ticker-h);
-    gap: 0;
-    padding: 0 !important; /* ensure section padding never leaks in */
-}
-
-/* Hero row */
-.hero-screen-main {
-    min-height: 0; /* allow content to shrink within grid */
-    display: grid;
-    align-items: center;
-    overflow: hidden;
-}
-
-/* Make hero content more compact specifically on Home */
-.hero-screen .hero-grid {
-    gap: clamp(8px, 2vw, 16px);
-}
-
-.hero-screen .hero h1 {
-    font-size: clamp(28px, 4.3vw, 46px);
-    margin-bottom: 8px;
-}
-
-.hero-screen .hero p {
-    margin: 4px 0 10px;
-}
-
-.hero-screen .inline-check {
-    margin: 6px 0 6px;
-}
-
-.hero-screen .scheduler {
-    margin-top: 8px;
-}
-
-/* The right-side emblem should never dictate vertical height */
-.hero-screen .emblem {
-    aspect-ratio: auto; /* unfix the 1:1 for Home */
-    height: clamp(220px, 32vh, 340px); /* keep it visually strong but bounded */
-    max-width: 100%;
-}
-
-/* Ticker row locked height */
-.hero-screen-ticker {
-    height: var(--ticker-h);
-    display: grid;
-    align-items: center;
-    overflow: hidden;
-}
-
-/* Make sure your ticker doesn’t add margins that push height */
-.ticker {
-    height: 100%;
-    display: grid;
-    align-items: center;
-    margin: 0;
-}
-
-.ticker-track {
-    padding: 0 6px;
-}
-/* dynamic sizes written by SiteLayout effect */
-:root {
-    --header-h: 72px;
-    --footer-h: 240px;
-    /* make the ticker taller so nothing is clipped */
-    --ticker-h: 92px; /* desktop default */
-}
-
-@media (max-width: 1024px) {
-    :root {
-        --ticker-h: 84px;
-    }
-}
-
-@media (max-width: 640px) {
-    :root {
-        --ticker-h: 76px;
-    }
-}
-
-/* home screen layout (unchanged grid rows, now taller) */
-.hero-screen {
-    height: calc(100dvh - var(--header-h) - var(--footer-h));
-    display: grid;
-    grid-template-rows: 1fr var(--ticker-h);
-    gap: 0;
-    padding: 0 !important;
-}
-
-/* ticker row: ensure padding counts toward height and content is centered */
-.hero-screen-ticker {
-    height: var(--ticker-h);
-    box-sizing: border-box;
-    padding-block: 6px; /* small breathing room */
-    display: grid;
-    align-items: center;
-    overflow: hidden; /* keeps the row clean */
-    border-top: 1px solid var(--line); /* optional: a separator */
-    background: linear-gradient(180deg, #0f2626, #0b1f1f);
-}
-
-/* make the ticker internals fill the row without clipping */
-.ticker {
-    height: 100%;
-    display: grid;
-    align-items: center;
-    margin: 0;
-}
-
-.ticker-track {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    gap: clamp(12px, 2vw, 24px);
-    white-space: nowrap;
-    /* ensure the items sit vertically centered within the row */
-}
-
-.ticker-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    line-height: 1.2;
-    padding: 6px 10px; /* make sure padding fits in row */
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: #102727;
-    color: var(--muted);
-    font-size: clamp(13px, 1.2vw, 15px);
-}
-
-    /* if your ticker uses icons/images, cap their height to the row */
-    .ticker-item img,
-    .ticker-item svg {
-        max-height: calc(var(--ticker-h) - 20px); /* row height minus paddings */
-        width: auto;
-        display: block;
-    }
-/* ====== Home screen layout proportions ====== */
-/* Carousel should be big: use ~60% of the available page height for it */
-:root {
-    --home-carousel-ratio: 0.6; /* tweak between 0.5 and 0.7 to taste */
-}
-
-/* SiteLayout JS already sets --header-h / --footer-h. We derive section heights here. */
-.hero-screen {
-    /* total vertical space (no page scroll) */
-    height: calc(100dvh - var(--header-h) - var(--footer-h));
-    /* split between hero and carousel */
-    --carousel-h: calc((100dvh - var(--header-h) - var(--footer-h)) * var(--home-carousel-ratio));
-    --hero-h: calc((100dvh - var(--header-h) - var(--footer-h)) - var(--carousel-h));
-    display: grid;
-    grid-template-rows: var(--hero-h) var(--carousel-h);
-    gap: 0;
-    padding: 0 !important;
-}
-
-/* Make sure inner sections don't push the layout */
-.hero-screen-main,
-.hero-screen-carousel {
-    min-height: 0; /* critical so children don't overflow the grid rows */
-}
-
-/* The Hero region can scroll internally if it needs to (but we keep it tight) */
-.hero-screen-main {
-    overflow: hidden;
-    display: grid;
-    align-items: center; /* vertically center hero content */
-}
-
-/* Tighten hero spacing a bit so it doesn't feel tall */
-.hero-screen .hero {
-    padding: 36px 0 24px; /* smaller than default */
-}
-
-.hero-grid {
-    align-items: center;
-}
-
-/* ====== Infinite carousel row ====== */
-.services-carousel {
-    height: var(--carousel-h);
-    display: grid;
-    align-items: center;
-    background: linear-gradient(180deg, #0f2626, #0b1f1f);
-    border-top: 1px solid var(--line);
-    overflow: hidden;
-}
-
-.carousel-viewport {
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-    /* nice edge fade */
-    -webkit-mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
-}
-
-/* Track scrolls left forever. Speed tuned for large cards. */
-.carousel-track {
-    display: flex;
-    gap: clamp(16px, 2vw, 24px);
-    align-items: stretch;
-    height: 100%;
-    padding-inline: 6%;
-    width: max-content;
-    animation: scroll-x 32s linear infinite;
-}
-
-.services-carousel:hover .carousel-track {
-    animation-play-state: paused;
-}
-
-@keyframes scroll-x {
-    from {
-        transform: translateX(0);
-    }
-
-    to {
-        transform: translateX(-50%);
-    }
-    /* because we duplicated the content */
-}
-
-/* ====== Big rectangular service cards ====== */
-.service-card {
-    height: calc(var(--carousel-h) - 24px); /* leave a bit of vertical breathing room */
-    aspect-ratio: 16 / 9; /* nice wide card */
-    flex: 0 0 auto; /* fixed-size boxes in the track */
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    display: grid;
-}
-
-/* inner spacing + layout */
-.service-card-inner {
-    display: grid;
-    grid-template-rows: auto auto 1fr auto; /* badge, title, copy, image (or swap) */
-    gap: 10px;
-    padding: clamp(12px, 2.2vw, 18px);
-}
-
-/* Emphasize like before but larger */
-.service-card .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    color: var(--muted);
-    font-size: clamp(12px, 1.2vw, 14px);
-    background: #102727;
-    width: max-content;
-}
-
-.service-card h3 {
-    margin: 0;
-    font-size: clamp(18px, 2.2vw, 24px);
-    line-height: 1.15;
-}
-
-.service-card p {
-    margin: 0;
-    color: var(--muted);
-    font-size: clamp(14px, 1.4vw, 16px);
-}
-
-/* Placeholder image area (swap to real image later) */
-.service-img {
-    margin-top: 8px;
-    border: 1px dashed var(--line);
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(31,110,110,.12), rgba(31,110,110,.04));
-    min-height: 0; /* keep inside the card */
-}
-
-/* Smaller screens: keep things legible, reduce height ratio a bit */
-@media (max-width: 960px) {
-    :root {
-        --home-carousel-ratio: 0.55;
-    }
-}
-
-@media (max-width: 640px) {
-    :root {
-        --home-carousel-ratio: 0.5;
-    }
-
-    .carousel-track {
-        gap: 12px;
-        padding-inline: 4%;
-    }
-}
-/* ===== Home screen proportions: larger ticker, still no page scroll ===== */
-:root {
-    /* tune this between 0.5 and 0.7 for how tall you want the ticker row */
+    /* tune 0.50–0.70 for ticker share of height */
     --home-ticker-ratio: 0.60;
 }
 
-/* SiteLayout sets --header-h / --footer-h; compute available */
+#route-scroll {
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+    overflow: auto;
+}
+
+    #route-scroll.no-scroll {
+        overflow: hidden;
+    }
+
+/* Split hero/ticker with no page scroll */
 .hero-screen {
     --avail: calc(100dvh - var(--header-h) - var(--footer-h));
     display: grid;
@@ -1403,7 +778,6 @@ footer {
     min-height: 0;
 }
 
-/* tighten hero so it never forces scroll */
 .hero-screen-main {
     display: grid;
     align-items: center;
@@ -1427,24 +801,34 @@ footer {
 .hero-screen .hero p {
     margin: 6px 0 14px;
 }
+/* emblem in home should not dictate height */
+.hero-screen .emblem {
+    aspect-ratio: auto;
+    height: clamp(220px, 32vh, 340px);
+    max-width: 100%;
+}
 
 /* ===== Services Ticker as big rectangular cards (infinite) ===== */
 .ticker {
     height: 100%;
     background: linear-gradient(180deg,#0f2626,#0b1f1f);
     border-top: 1px solid var(--line);
+    display: grid;
+    align-items: center;
+    margin: 0;
 }
 
-.ticker-viewport {
+.ticker-viewport,
+.carousel-viewport { /* support both class names if used */
     position: relative;
     height: 100%;
     overflow: hidden;
-    /* subtle side fade so items appear to enter/exit */
     -webkit-mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
 }
 
-.ticker-track {
+.ticker-track,
+.carousel-track {
     display: flex;
     gap: clamp(16px, 2vw, 24px);
     align-items: stretch;
@@ -1454,7 +838,8 @@ footer {
     animation: ticker-loop 32s linear infinite;
 }
 
-.ticker:hover .ticker-track {
+.ticker:hover .ticker-track,
+.services-carousel:hover .carousel-track {
     animation-play-state: paused;
 }
 
@@ -1466,13 +851,12 @@ footer {
     to {
         transform: translateX(-50%);
     }
-    /* we duplicated the list */
 }
 
-/* BIG rectangular cards, same vibe as .service */
-.ticker-card {
-    height: calc(100% - 12px); /* leave a little breathing room */
-    aspect-ratio: 16 / 9; /* wide card */
+/* Big rectangular cards (ticker/service) */
+.ticker-card, .service-card {
+    height: calc(100% - 12px);
+    aspect-ratio: 16 / 9;
     flex: 0 0 auto;
     background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
     border: 1px solid var(--line);
@@ -1482,14 +866,14 @@ footer {
     display: grid;
 }
 
-.ticker-card-inner {
+.ticker-card-inner, .service-card-inner {
     display: grid;
     grid-template-rows: auto auto 1fr auto;
     gap: 10px;
     padding: clamp(12px, 2vw, 18px);
 }
 
-.ticker-card .badge {
+.ticker-card .badge, .service-card .badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -1502,19 +886,19 @@ footer {
     width: max-content;
 }
 
-.ticker-card h3 {
+.ticker-card h3, .service-card h3 {
     margin: 0;
     font-size: clamp(18px, 2.2vw, 24px);
     line-height: 1.15;
 }
 
-.ticker-card .ti-copy {
+.ticker-card .ti-copy, .service-card p {
     margin: 0;
     color: var(--muted);
     font-size: clamp(14px, 1.4vw, 16px);
 }
-/* optional image area; replace with <img> later */
-.ticker-card .ti-img {
+
+.ticker-card .ti-img, .service-img {
     margin-top: 8px;
     border: 1px dashed var(--line);
     border-radius: 12px;
@@ -1522,7 +906,33 @@ footer {
     min-height: 0;
 }
 
-/* responsiveness: slightly reduce ticker share on small screens */
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.2;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #102727;
+    color: var(--muted);
+    font-size: clamp(13px, 1.2vw, 15px);
+    white-space: nowrap;
+    box-shadow: var(--shadow);
+}
+
+.ti-badge {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.ti-title {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+/* Ticker density tweaks */
 @media (max-width: 960px) {
     :root {
         --home-ticker-ratio: 0.55;
@@ -1534,8 +944,12 @@ footer {
         --home-ticker-ratio: 0.50;
     }
 
-    .ticker-track {
+    .ticker-track, .carousel-track {
         gap: 12px;
         padding-inline: 4%;
+    }
+
+    .ticker-item {
+        min-width: 220px;
     }
 }
