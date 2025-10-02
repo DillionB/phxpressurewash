@@ -1202,3 +1202,52 @@ footer {
 .hero-screen .hero {
     padding: 28px 0 16px;
 }
+/* Shell fills viewport; content area flexes between header/footer */
+.app-shell {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column
+}
+
+/* Route content uses CSS vars (updated by SiteLayout) */
+:root {
+    --header-h: 72px; /* fallback; gets overwritten at runtime */
+    --footer-h: 240px; /* fallback; gets overwritten at runtime */
+    --ticker-h: clamp(150px,24vh,220px);
+}
+
+#route-scroll {
+    flex: 1 1 auto;
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+}
+
+    #route-scroll.no-scroll {
+        overflow: hidden
+    }
+
+/* Home: two rows -> hero (fills leftover) + fixed-height ticker */
+.hero-screen {
+    --avail: calc(100dvh - var(--header-h) - var(--footer-h));
+    display: grid;
+    grid-template-rows: calc(var(--avail) - var(--ticker-h)) var(--ticker-h);
+    min-height: var(--avail);
+    padding: 0 !important;
+    margin: 0;
+}
+
+/* Center hero vertically, prevent margin-collapsing gaps */
+.hero-screen-main {
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+}
+
+    .hero-screen-main > .wrap {
+        margin: 0;
+        padding: 0
+    }
+
+/* Ticker wrapper must explicitly take its row height */
+.hero-screen-ticker {
+    height: var(--ticker-h)
+}

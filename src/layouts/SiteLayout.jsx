@@ -1,16 +1,16 @@
 // src/layouts/SiteLayout.jsx
 import React, { useLayoutEffect } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import SlideNavigator from '../components/SlideNavigator.jsx'
+import { Outlet, useLocation } from 'react-router-dom'
 
 export default function SiteLayout() {
   const { pathname } = useLocation()
 
-  // Keep CSS vars in sync with actual header/footer heights
+  // Keep CSS vars in sync with *actual* header/footer heights
   useLayoutEffect(() => {
-    const syncVars = () => {
+    const sync = () => {
       const header = document.querySelector('header.topbar')
       const footer = document.querySelector('footer')
       const h = header?.offsetHeight || 72
@@ -18,28 +18,32 @@ export default function SiteLayout() {
       document.documentElement.style.setProperty('--header-h', `${h}px`)
       document.documentElement.style.setProperty('--footer-h', `${f}px`)
     }
-    syncVars()
-    window.addEventListener('resize', syncVars)
-    // run once more after paint (fonts/images)
-    const t = setTimeout(syncVars, 0)
+    sync()
+
+    // React to size changes (fonts load, responsive, etc.)
+    const ro = new ResizeObserver(sync)
+    const header = document.querySelector('header.topbar')
+    const footer = document.querySelector('footer')
+    if (header) ro.observe(header)
+    if (footer) ro.observe(footer)
+    window.addEventListener('load', sync)
+    window.addEventListener('resize', sync)
+
     return () => {
-      window.removeEventListener('resize', syncVars)
-      clearTimeout(t)
+      ro.disconnect()
+      window.removeEventListener('load', sync)
+      window.removeEventListener('resize', sync)
     }
   }, [pathname])
 
   return (
-    <div className="min-h-screen" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="app-shell">
       <Header />
-
-      {/* Restores scroll-to-route behavior (wheel/touch) */}
+      {/* wheel/touch -> route transitions */}
       <SlideNavigator />
-
-      {/* Hide native scroll so SlideNavigator owns navigation */}
-      <main id="route-scroll" style={{ flex: '1 1 auto', overflow: 'hidden' }}>
+      <main id="route-scroll">
         <Outlet />
       </main>
-
       <Footer />
     </div>
   )
