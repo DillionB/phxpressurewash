@@ -1163,3 +1163,42 @@ footer {
         transform: none !important;
     }
 }
+
+
+/* Header/footer heights are synced by SiteLayout; these serve as fallbacks */
+:root {
+    --header-h: 72px;
+    --footer-h: 240px;
+    --ticker-h: clamp(150px, 24vh, 220px); /* your current ticker height */
+}
+
+/* The page content area between header and footer */
+#route-scroll {
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+}
+
+    #route-scroll.no-scroll {
+        overflow: hidden;
+    }
+
+/* Home screen: 2 rows
+   row 1 = (available - ticker), row 2 = ticker */
+.hero-screen {
+    --avail: calc(100dvh - var(--header-h) - var(--footer-h));
+    display: grid;
+    grid-template-rows: calc(var(--avail) - var(--ticker-h)) var(--ticker-h);
+    min-height: var(--avail);
+    padding: 0 !important;
+}
+
+/* keep hero content vertically centered and clipped nicely */
+.hero-screen-main {
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Optional compact hero padding on Home so it never forces scroll */
+.hero-screen .hero {
+    padding: 28px 0 16px;
+}
