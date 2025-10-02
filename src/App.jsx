@@ -1,5 +1,6 @@
+// src/App.jsx
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import StripeReturn from './components/StripeReturn.jsx'
 import SiteLayout from './layouts/SiteLayout.jsx'
 
@@ -19,14 +20,18 @@ export default function App() {
       <Routes>
         {/* All routes share the same header/footer */}
         <Route element={<SiteLayout />}>
+          {/* / */}
           <Route index element={<Home />} />
 
-          {/* Shop tabs: /shop/res | /shop/com | /shop/ind */}
+          {/* /shop -> redirect to default tab */}
+          <Route path="/shop" element={<Navigate to="/shop/res" replace />} />
+          {/* /shop/:tab where :tab is res | com | ind */}
           <Route path="/shop/:tab" element={<ShopPage />} />
 
-          {/* Account hub with internal tabs (Profile / Orders / Rewards) */}
+          {/* Account hub */}
           <Route path="/account" element={<AccountPage />} />
 
+          {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
