@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Hero from '../components/Hero.jsx'
 import Services from '../components/Services.jsx'
 import Coverage from '../components/Coverage.jsx'
@@ -7,13 +7,19 @@ import Reviews from '../components/Reviews.jsx'
 import ContactForm from '../components/ContactForm.jsx'
 
 export default function Home() {
-
-    useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.slice(1)
+  // Smooth-scroll to a hash when landing on "/#section"
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.slice(1)
       const el = document.getElementById(id)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (el) {
+        // wait a frame so layout is ready
+        requestAnimationFrame(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+      }
     }
+  }, [])
 
   return (
     <>
