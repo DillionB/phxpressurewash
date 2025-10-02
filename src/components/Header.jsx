@@ -51,10 +51,10 @@ export default function Header(){
                 Rewards
               </NavLink>
 
-              <a href="/#services" onClick={gotoHomeAnchor('services')}>Overview</a>
-              <a href="/#coverage" onClick={gotoHomeAnchor('coverage')}>Service Areas</a>
-              <a href="/#gallery" onClick={gotoHomeAnchor('gallery')}>Gallery</a>
-              <a href="/#reviews" onClick={gotoHomeAnchor('reviews')}>Reviews</a>
+              <NavLink to="/reviews" className={({isActive}) => isActive ? 'active' : undefined}>
+                Reviews
+              </NavLink>
+
               <a href="/#contact" onClick={gotoHomeAnchor('contact')}>Contact</a>
 
               <NavLink to="/account" className={({isActive}) => isActive ? 'active' : undefined}>
