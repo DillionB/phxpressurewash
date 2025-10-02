@@ -954,3 +954,27 @@ footer {
         min-width: 220px;
     }
 }
+/* Make ticker cards ~25% of the ticker row height */
+.ticker {
+    --card-scale: 0.25;
+}
+
+/* Let cards keep their own height instead of stretching full row height */
+.ticker-track,
+.carousel-track {
+    align-items: center; /* was: stretch */
+}
+
+/* Scale card height relative to the ticker row */
+.ticker-card,
+.service-card {
+    height: calc((100% - 12px) * var(--card-scale)); /* ~25% of row */
+}
+
+/* (Optional) if you want them even smaller on phones, tweak the scale */
+@media (max-width: 640px) {
+    .ticker {
+        --card-scale: 0.30;
+    }
+    /* a tad larger on small screens so they’re readable */
+}
