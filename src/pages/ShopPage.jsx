@@ -45,5 +45,15 @@ export default function ServicesHeader() {
         <span className="subtab-label">Industrial</span>
       </NavLink>
     </div>
+    <div className="shop-layout">
+        <div className="shop-main">
+          {current === 'res' && <Residential />}
+          {current === 'com' && <Commercial />}
+          {current === 'ind' && <Industrial />}
+        </div>
+        <div className="shop-side">
+          <CartSummary />
+        </div>
+      </div>
   )
 }
