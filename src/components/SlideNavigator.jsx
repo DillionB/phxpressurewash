@@ -7,6 +7,7 @@ export default function SlideNavigator() {
     '/shop/res', // Services sub-tabs
     '/shop/com',
     '/shop/ind',
+    '/rewards',
     '/account',  // Next main tab (append '/rewards' later if wanted)
   ]
 

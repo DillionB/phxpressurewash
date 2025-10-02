@@ -8,6 +8,7 @@ import Home from './pages/Home.jsx'
 import ShopPage from './pages/ShopPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import NotFound from './pages/NotFound.jsx'
+import RewardsPage from './pages/RewardsPage.jsx'
 
 import { CartProvider } from './state/CartContext'
 
@@ -27,6 +28,8 @@ export default function App() {
           <Route path="/shop" element={<Navigate to="/shop/res" replace />} />
           {/* /shop/:tab where :tab is res | com | ind */}
           <Route path="/shop/:tab" element={<ShopPage />} />
+
+          <Route path="/rewards" element={<RewardsPage />} />
 
           {/* Account hub */}
           <Route path="/account" element={<AccountPage />} />
