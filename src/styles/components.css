@@ -1057,40 +1057,4 @@ footer {
 .ticker-track {
     animation: none !important;
 }
-/* viewport contains 2 absolutely positioned tracks */
-.ticker-viewport,
-.carousel-viewport {
-    position: relative;
-    height: var(--ticker-h);
-    overflow: hidden;
-    /* wider feather so items fade out smoothly, not abruptly */
-    -webkit-mask-image: linear-gradient(to right, transparent 0, black 14%, black 86%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, black 14%, black 86%, transparent 100%);
-}
-
-/* each track is a long inline-flex row centered vertically */
-.carousel-track {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    display: inline-flex;
-    gap: clamp(14px, 2vw, 20px);
-    padding-inline: 6%;
-    transform: translate3d(0, -50%, 0); /* Y-center; X updated by JS */
-    will-change: transform;
-}
-
-/* ensure cards respect the current ticker sizing vars you already set */
-.ticker-card,
-.service-card {
-    height: calc(var(--ticker-h) - (var(--ticker-pad-y) * 2));
-    aspect-ratio: 2 / 1;
-    flex: 0 0 auto;
-    background: linear-gradient(180deg, rgba(14,38,38,.9), rgba(10,26,26,.9));
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    display: grid;
-}
 
