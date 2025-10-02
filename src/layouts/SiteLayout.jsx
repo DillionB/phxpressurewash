@@ -24,13 +24,15 @@ export default function SiteLayout() {
     return () => window.removeEventListener('resize', syncVars)
   }, [pathname])
 
-  return (
-    <>
+   return (
+    <div className="min-h-screen">
       <Header />
-      <div id="route-scroll">
+      {/* Intercepts wheel/touch on window and advances routes */}
+      <SlideNavigator />
+      <main id="route-scroll" style={{ flex: '1 1 auto', overflow: 'hidden' }}>
         <Outlet />
-      </div>
+      </main>
       <Footer />
-    </>
+    </div>
   )
 }
