@@ -868,3 +868,125 @@ footer {
             box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 40%, transparent), 0 0 0 4px color-mix(in srgb, var(--sun) 18%, transparent), 0 14px 34px rgba(0,0,0,.4);
         }
 
+/* ---- Screen math for routes ---- */
+:root {
+    /* Tune these if your header/footer heights differ */
+    --header-h: 72px;
+    --footer-h: 240px;
+}
+
+/* The page content area between header and footer */
+#route-scroll {
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+    overflow: auto;
+}
+
+    /* Home disables scrolling entirely */
+    #route-scroll.no-scroll {
+        overflow: hidden;
+    }
+
+/* ---- Home hero screen layout ---- */
+/* Two rows: (1) hero fills, (2) ticker fixed height */
+.hero-screen {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+    padding: 0; /* remove extra vertical padding on Home wrapper */
+}
+
+/* Inner wrappers for clarity (optional) */
+.hero-screen-main {
+    display: grid;
+    align-items: center; /* vertically center the hero grid */
+    padding: 24px 0 8px; /* keep it tight so it never forces scroll */
+}
+
+/* Make the hero more compact on Home */
+.hero-screen .hero-grid {
+    gap: clamp(14px, 2.2vw, 26px);
+}
+
+.hero-screen .hero h1 {
+    font-size: clamp(32px, 5vw, 60px);
+    margin-bottom: 12px;
+}
+
+.hero-screen .hero p {
+    margin: 8px 0 16px;
+}
+
+.hero-screen .inline-check {
+    margin: 8px 0 6px;
+}
+
+.hero-screen .scheduler {
+    margin-top: 12px;
+}
+
+/* ---- Services Ticker ---- */
+.hero-screen-ticker {
+    padding: 8px 0 12px;
+}
+
+.ticker {
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #0f2626, #0b1f1f);
+}
+
+.ticker-track {
+    display: flex;
+    gap: 12px;
+    padding: 10px 6px;
+    width: max-content;
+    animation: ticker-scroll 24s linear infinite;
+}
+
+/* Pause on hover if desired */
+.ticker:hover .ticker-track {
+    animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+    /* because we duplicated the list */
+}
+
+.ticker-item {
+    display: grid;
+    align-content: center;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #102727;
+    min-width: 280px; /* consistent pill width */
+    box-shadow: var(--shadow);
+    white-space: nowrap;
+}
+
+.ti-badge {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.ti-title {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+/* Make ticker tighter on small screens */
+@media (max-width: 640px) {
+    .ticker-item {
+        min-width: 220px;
+    }
+}
