@@ -1,110 +1,104 @@
 // src/components/ServicesTicker.jsx
-import React, { useEffect, useRef } from 'react'
+import React, { useMemo, useRef, useEffect } from 'react'
 import { services } from '../data/services.js'
 
 export default function ServicesTicker() {
-  const viewportRef = useRef(null)
-  const trackRef = useRef(null)
+  // one set per track; two tracks = seamless loop
+  const data = useMemo(() => services, [])
+  const vRef = useRef(null)
+  const aRef = useRef(null)
+  const bRef = useRef(null)
+  const rafId = useRef(0)
+
+  // animation state
+  const st = useRef({
+    w: 0,         // width of a single track (in px)
+    xA: 0,        // current translateX for track A
+    xB: 0,        // current translateX for track B
+    speed: 60,    // px/sec — tweak if you want faster/slower
+    last: 0
+  })
 
   useEffect(() => {
-    const viewport = viewportRef.current
-    const track = trackRef.current
-    if (!viewport || !track) return
-
-    // Build one set of cards
-    const makeCard = (s, i) => {
-      const el = document.createElement('article')
-      el.className = 'ticker-card'
-      el.innerHTML = `
-        <div class="ticker-card-inner">
-          <div class="badge">${s.badge}</div>
-          <h3>${s.title}</h3>
-          <div class="ti-copy">${s.copy}</div>
-        </div>`
-      el.setAttribute('data-key', `${s.title}-${i}`)
-      return el
+    const measure = () => {
+      const a = aRef.current
+      if (!a) return
+      // Use scrollWidth so gaps/padding are included
+      const w = a.scrollWidth
+      st.current.w = w
+      st.current.xA = 0
+      st.current.xB = w
+      // position immediately
+      a.style.transform = `translate3d(${st.current.xA}px, -50%, 0)`
+      bRef.current.style.transform = `translate3d(${st.current.xB}px, -50%, 0)`
     }
 
-    track.innerHTML = ''
-    const frag = document.createDocumentFragment()
-    services.forEach((s, i) => frag.appendChild(makeCard(s, i)))
-    track.appendChild(frag)
-
-    // Duplicate until we have enough width to loop seamlessly
-    const ensureFill = () => {
-      const vw = viewport.clientWidth || 1
-      let loops = 0
-      while (track.scrollWidth < vw * 2.5 && loops < 20) {
-        services.forEach((s, i) => track.appendChild(makeCard(s, `dup${loops}-${i}`)))
-        loops++
-      }
-    }
-    ensureFill()
-
-    // Continuous RAF marquee (wrap by moving first child to the end)
-    let rafId, last = performance.now(), offset = 0, paused = false
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const speed = 40 // px/sec — tweak if you like
-
-    const gapPx = () => {
-      const cs = getComputedStyle(track)
-      // rollup/vite sometimes exposes only `gap`
-      return parseFloat(cs.columnGap || cs.gap || '0') || 0
-    }
-
-    const tick = (now) => {
-      const dt = (now - last) / 1000
-      last = now
-      if (!paused && !prefersReduced) {
-        offset -= speed * dt
-
-        // when the first card is fully off-screen, append it to the end and correct offset
-        let first = track.firstElementChild
-        let gp = gapPx()
-        while (first) {
-          const w = first.getBoundingClientRect().width + gp
-          if (-offset >= w) {
-            offset += w
-            track.appendChild(first)
-            first = track.firstElementChild
-          } else {
-            break
-          }
-        }
-
-        track.style.transform = `translateX(${offset}px)`
-      }
-      rafId = requestAnimationFrame(tick)
-    }
-    rafId = requestAnimationFrame(tick)
-
-    // Pause on hover
-    const enter = () => { paused = true }
-    const leave = () => { paused = false }
-    viewport.addEventListener('mouseenter', enter)
-    viewport.addEventListener('mouseleave', leave)
-
-    // Recompute on resize
     const onResize = () => {
-      offset = 0
-      track.style.transform = 'translateX(0)'
-      ensureFill()
+      cancelAnimationFrame(rafId.current)
+      // Let layout settle then re-measure and restart
+      requestAnimationFrame(() => {
+        measure()
+        start()
+      })
     }
-    const ro = new ResizeObserver(onResize)
-    ro.observe(viewport)
 
+    const step = (now) => {
+      const s = st.current
+      if (!s.last) s.last = now
+      const dt = (now - s.last) / 1000
+      s.last = now
+
+      const dx = -s.speed * dt
+      s.xA += dx
+      s.xB += dx
+
+      // When a whole track completely clears the left edge, move it to the right
+      const w = s.w
+      if (s.xA <= -w) s.xA += w
+      if (s.xB <= -w) s.xB += w
+
+      // Apply transforms
+      if (aRef.current) aRef.current.style.transform = `translate3d(${s.xA}px, -50%, 0)`
+      if (bRef.current) bRef.current.style.transform = `translate3d(${s.xB}px, -50%, 0)`
+
+      rafId.current = requestAnimationFrame(step)
+    }
+
+    const start = () => {
+      st.current.last = 0
+      rafId.current = requestAnimationFrame(step)
+    }
+
+    measure()
+    start()
+    window.addEventListener('resize', onResize)
     return () => {
-      cancelAnimationFrame(rafId)
-      viewport.removeEventListener('mouseenter', enter)
-      viewport.removeEventListener('mouseleave', leave)
-      ro.disconnect()
+      window.removeEventListener('resize', onResize)
+      cancelAnimationFrame(rafId.current)
     }
   }, [])
 
+  const Card = ({ s }) => (
+    <article className="ticker-card">
+      <div className="ticker-card-inner">
+        <div className="badge">{s.badge}</div>
+        <h3>{s.title}</h3>
+        <p className="ti-copy">{s.copy}</p>
+      </div>
+    </article>
+  )
+
   return (
-    <div className="ticker" aria-label="Service highlights">
-      <div className="ticker-viewport" ref={viewportRef}>
-        <div className="ticker-track" ref={trackRef} />
+    <div className="ticker">
+      <div className="ticker-viewport">
+        {/* Track A */}
+        <div className="carousel-track" ref={aRef}>
+          {data.map((s, i) => <Card s={s} key={`a-${i}`} />)}
+        </div>
+        {/* Track B (identical) */}
+        <div className="carousel-track" ref={bRef} aria-hidden="true">
+          {data.map((s, i) => <Card s={s} key={`b-${i}`} />)}
+        </div>
       </div>
     </div>
   )
