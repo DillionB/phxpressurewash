@@ -1053,10 +1053,6 @@ footer {
         padding-inline: 4%;
     }
 }
-/* JS drives the marquee now */
-.ticker-track {
-    animation: none !important;
-}
 
 /* === TICKER: seamless, continuous (CSS-only) === */
 /* Assumes your track renders 3 copies of the card list for perfect tiling */
