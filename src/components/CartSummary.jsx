@@ -22,30 +22,6 @@ export default function CartSummary() {
             )}
 
             {/* Scroll area */}
-            {items.length > 0 && (
-                <div className="cart-lines" role="list">
-                    {items.map((item) => (
-                        <div
-                            key={item.id || `${item.title}-${Math.random()}`}
-                            className="cart-line"
-                            role="listitem"
-                        >
-                            <div className="cart-line-right">
-                                <div className="cart-line-price">{fmt(item.subtotal)}</div>
-                                <button
-                                    className="cart-remove"
-                                    aria-label={`Remove ${item.title}`}
-                                    title="Remove"
-                                    type="button"
-                                    onClick={() => removeItem(item.id)}
-                                >
-                                    ×
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
 
             {/* Sticky-ish footer */}
             <div className="cart-footer-row" aria-live="polite">
