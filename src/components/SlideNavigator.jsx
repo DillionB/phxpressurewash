@@ -4,9 +4,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 export default function SlideNavigator() {
   const routeOrder = [
     '/',         // Home
-    '/shop/res', // Services sub-tabs
+      '/shop/res', // Services sub-tabs
+      '/shop/ind',
     '/shop/com',
-    '/shop/ind',
     '/rewards',
     '/reviews',
     '/contact',
