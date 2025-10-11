@@ -30,18 +30,6 @@ export default function CartSummary() {
                             className="cart-line"
                             role="listitem"
                         >
-                            <div className="cart-line-main">
-                                <div className="cart-line-title">{item.title}</div>
-                                {item.detail && <div className="cart-line-sub small">{item.detail}</div>}
-                                {item.meta && item.meta.length > 0 && (
-                                    <div className="cart-line-tags">
-                                        {item.meta.map((m, i) => (
-                                            <span className="tag-chip" key={`${m}-${i}`}>{m}</span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
                             <div className="cart-line-right">
                                 <div className="cart-line-price">{fmt(item.subtotal)}</div>
                                 <button
