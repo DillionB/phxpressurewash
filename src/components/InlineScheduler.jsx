@@ -25,7 +25,7 @@ export default function InlineScheduler({ presetAddress }) {
             )
         }
     }, [])
-
+     
     const formatPhone = (val) => {
         const d = (val || "").replace(/\D/g, "").slice(0, 10);
         const p1 = d.slice(0, 3);
