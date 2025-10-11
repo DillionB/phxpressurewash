@@ -227,7 +227,7 @@ export default function Commercial() {
                             {PHONE ? (
                                 <a className="mini-btn" href={`tel:${PHONE}`}>Call Now</a>
                             ) : (
-                                <button className="mini-btn" type="button" onClick={() => navigate('/contact')}>Call Now</button>
+                                    <button className="mini-btn" type="button" onClick={() => navigate('/contact')}>Call Now 623-469-5994</button>
                             )}
                         </div>
                     </div>
