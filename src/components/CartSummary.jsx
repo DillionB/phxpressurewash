@@ -51,8 +51,15 @@ export default function CartSummary() {
                                     type="button"
                                     onClick={() => removeItem(item.id)}
                                 >
-                                    ×
+                                    <svg
+                                        width="16" height="16" viewBox="0 0 24 24"
+                                        aria-hidden="true" focusable="false"
+                                    >
+                                        <path d="M18 6L6 18M6 6l12 12"
+                                            stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                    </svg>
                                 </button>
+
                             </div>
                         </div>
                     ))}
