@@ -1,25 +1,35 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>PHX Employee</title>
 
-    <!-- App icons -->
-    <link rel="icon" href="/icon-192.png" sizes="192x192" />
-    <link rel="icon" href="/icon-512.png" sizes="512x512" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
-    <!-- PWA manifest + colors -->
+    <!-- Manifest (PWA) -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#f57c00" />
 
-    <!-- iOS standalone (no Safari chrome) -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Theme / status bar colors -->
+    <meta name="theme-color" content="#b85b1a" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- Optional: basic SEO -->
+    <!-- iOS: launch standalone (no Safari UI) + name for the icon label -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="PHX Employee" />
+
+    <!-- iOS app icons (Apple ignores manifest icons) -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple-touch-icon-120.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png" />
+
+    <!-- Favicon / Android (Chrome uses manifest too, but keep these) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+
+    <!-- Helpful misc -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="PHX Employee — internal admin portal." />
 </head>
 <body>
