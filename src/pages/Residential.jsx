@@ -49,7 +49,7 @@ export default function Residential() {
         setActive(val)
         const sp = new URLSearchParams(location.search)
         sp.set('tab', val)
-        navigate({ pathname: '/services/res', search: sp.toString() }, { replace: true })
+        navigate({ pathname: '/shop/res', search: sp.toString() }, { replace: true })
     }
 
     return (

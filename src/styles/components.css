@@ -1775,3 +1775,24 @@ footer {
     .ticker-card.as-button:hover .ticker-card-inner {
         transform: translateY(-2px);
     }
+/* Clickable feel for ticker cards */
+.ticker-card.as-button {
+    cursor: pointer;
+}
+
+    .ticker-card.as-button .ticker-card-inner {
+        transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+        border-radius: 12px; /* keeps current style tidy */
+    }
+
+    .ticker-card.as-button:hover .ticker-card-inner,
+    .ticker-card.as-button:focus .ticker-card-inner {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        background: color-mix(in oklab, var(--card, #0b1515) 85%, white 15%);
+    }
+
+    .ticker-card.as-button:focus {
+        outline: 2px solid var(--sun);
+        outline-offset: 3px;
+    }

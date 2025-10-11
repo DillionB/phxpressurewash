@@ -1,4 +1,3 @@
-// src/components/ServicesTicker.jsx
 import React, { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { services } from '../data/services.js'
@@ -6,31 +5,23 @@ import { services } from '../data/services.js'
 export default function ServicesTicker() {
     const navigate = useNavigate()
 
-    // Map each ticker item to its best destination
-    // route: path; tab: residential sub-tab (optional)
     const targetByTitle = {
-        'Home Exterior & Stucco': { route: '/services/res', tab: 'house' },
-        'Concrete, & Oil Stain Removal': { route: '/services/res', tab: 'driveway' },
-        'Commercial Flatwork & Facades': { route: '/services/com' }, // goes to commercial
-        'Boost Output • Gentle Rinse': { route: '/services/res', tab: 'solar' },
-        'CMU, Block & Perimeter Walls': { route: '/services/res', tab: 'house' },
-        'Stain Treatments': { route: '/services/res', tab: 'driveway' },
+        'Home Exterior & Stucco': { route: '/shop/res', tab: 'house' },
+        'Concrete, & Oil Stain Removal': { route: '/shop/res', tab: 'driveway' },
+        'Commercial Flatwork & Facades': { route: '/shop/com' },
+        'Boost Output • Gentle Rinse': { route: '/shop/res', tab: 'solar' },
+        'CMU, Block & Perimeter Walls': { route: '/shop/res', tab: 'house' },
+        'Stain Treatments': { route: '/shop/res', tab: 'driveway' },
     }
 
-    // 3x for a perfect 1/3-width keyframed loop
     const loop = useMemo(() => [...services, ...services, ...services], [])
 
     const Card = ({ s, k }) => {
-        const tgt = targetByTitle[s.title] || { route: '/services/res' }
+        const tgt = targetByTitle[s.title] || { route: '/shop/res' }
         const onClick = () => {
-            if (tgt.tab) {
-                // use query param for Residential to pick the tab
-                navigate(`${tgt.route}?tab=${encodeURIComponent(tgt.tab)}`)
-            } else {
-                navigate(tgt.route)
-            }
+            if (tgt.tab) navigate(`${tgt.route}?tab=${encodeURIComponent(tgt.tab)}`)
+            else navigate(tgt.route)
         }
-
         return (
             <article
                 className="ticker-card as-button"
