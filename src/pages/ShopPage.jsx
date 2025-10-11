@@ -40,7 +40,7 @@ export default function ShopPage() {
                     <span className="subtab-label">Residential</span>
                 </NavLink>
                 <NavLink
-                    to="/services/ind"
+                    to="/shop/ind"
                     className={`subtab-btn ${current === 'ind' ? 'active' : ''}`}
                     aria-current={current === 'ind' ? 'page' : undefined}
                 >
