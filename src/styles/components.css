@@ -2681,3 +2681,31 @@ footer {
     align-items: center;
     justify-content: space-between;
 }
+.center-wrap {
+    min-height: calc(100dvh - var(--footer-height, 80px));
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    display: grid;
+    gap: 10px;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid #0002;
+    border-top-color: var(--accent, #f57c00);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
