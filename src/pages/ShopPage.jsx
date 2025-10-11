@@ -16,7 +16,7 @@ export default function ShopPage() {
     // If someone lands on /services or /services/whatever, normalize it.
     useEffect(() => {
         if (!VALID.includes(tab)) {
-            navigate('/services/res', { replace: true })
+            navigate('/shop/res', { replace: true })
         }
     }, [tab, navigate])
 
@@ -30,7 +30,7 @@ export default function ShopPage() {
             {/* Sub-tab bar */}
             <div className="subtabs subtabs-lg">
                 <NavLink
-                    to="/services/res"
+                    to="/shop/res"
                     className={`subtab-btn ${current === 'res' ? 'active' : ''}`}
                     aria-current={current === 'res' ? 'page' : undefined}
                 >
@@ -68,7 +68,7 @@ export default function ShopPage() {
                     <span className="subtab-label">Industrial</span>
                 </NavLink>
                 <NavLink
-                    to="/services/com"
+                    to="/shop/com"
                     className={`subtab-btn ${current === 'com' ? 'active' : ''}`}
                     aria-current={current === 'com' ? 'page' : undefined}
                 >
