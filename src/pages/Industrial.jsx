@@ -189,31 +189,65 @@ export default function Industrial() {
     const formatUSD = (n) => n.toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 
     const addSelectedToCart = () => {
-        let added = 0
+        let added = 0;
+
+        // total number of equipment units selected
+        const totalEquip = Object.values(qty).reduce((sum, n) => sum + (n || 0), 0);
+
+        // Add all equipment line items
         EQUIPMENT.forEach(e => {
-            const count = qty[e.id] || 0
+            const count = qty[e.id] || 0;
             if (count > 0) {
-                added++
+                added++;
                 addItem({
                     title: `Equipment Wash — ${e.label} ×${count}`,
                     detail: `${formatUSD(e.price)} per unit`,
                     subtotal: e.price * count,
                     meta: ['industrial', 'equipment']
-                })
+                });
             }
-        })
+        });
+
+        // Add jobsite services (oil multiplies by total equipment count)
+        let oilSelectedButNoEquip = false;
+
         SERVICES.forEach(s => {
-            if (svc.includes(s.id)) {
+            if (!svc.includes(s.id)) return;
+
+            // Special handling for oil change
+            if (s.id === 'oil') {
+                if (totalEquip === 0) {
+                    // nothing to multiply by — keep note to guide user
+                    oilSelectedButNoEquip = true;
+                    return;
+                }
+                added++;
                 addItem({
-                    title: `Jobsite — ${s.label}`,
-                    detail: s.price != null ? 'Flat service' : (s.note || 'Contact for quote'),
-                    subtotal: s.price || 0,
+                    title: `Jobsite — ${s.label} ×${totalEquip}`,
+                    detail: `${formatUSD(s.price)} per unit × ${totalEquip}`,
+                    subtotal: s.price * totalEquip,
                     meta: ['industrial', 'site-service']
-                })
+                });
+                return;
             }
-        })
-        setNote(added ? `✅ Added ${added} line item${added > 1 ? 's' : ''} to cart.` : 'Pick at least one item.')
-    }
+
+            // All other services unchanged
+            added++;
+            addItem({
+                title: `Jobsite — ${s.label}`,
+                detail: s.price != null ? 'Flat service' : (s.note || 'Contact for quote'),
+                subtotal: s.price || 0,
+                meta: ['industrial', 'site-service']
+            });
+        });
+
+        if (oilSelectedButNoEquip) {
+            setNote('Add at least one equipment unit to apply Fluid/Oil Change pricing.');
+        } else {
+            setNote(added ? `✅ Added ${added} line item${added > 1 ? 's' : ''} to cart.` : 'Pick at least one item.');
+        }
+    };
+
 
     // --- Quote form handlers ---
     const formatPhone = (val) => {
@@ -400,7 +434,10 @@ export default function Industrial() {
                                 title={`${s.label} — ${priceText}`}
                             >
                                 {s.label}
-                                <span className="tiny muted" style={{ marginLeft: 6 }}>{priceText}</span>
+                                <span className="tiny muted" style={{ marginLeft: 6 }}>
+                                    {s.id === 'oil' ? `${formatUSD(s.price)} / unit` : (s.price != null ? formatUSD(s.price) : (s.note || 'Contact for quote'))}
+                                </span>
+
                             </button>
                         )
                     })}
