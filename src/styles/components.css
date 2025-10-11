@@ -1,4 +1,4 @@
-/* ===========================
+ï»¿/* ===========================
    HERO & CARDS
    =========================== */
 .hero {
@@ -751,7 +751,7 @@ footer {
 :root {
     --header-h: 72px;
     --footer-h: 240px;
-    /* total height of the ticker row — tweak this */
+    /* total height of the ticker row â€” tweak this */
     --ticker-h: clamp(110px, 18vh, 160px);
 }
 
@@ -974,8 +974,8 @@ footer {
 /* === Ticker sizing & seamless loop (3x list) === */
 :root {
     --ticker-h: clamp(150px, 24vh, 220px);
-    --ticker-pad-top: 8px; /* a bit less on top… */
-    --ticker-pad-bot: 22px; /* …a bit more on bottom to lift cards */
+    --ticker-pad-top: 8px; /* a bit less on topâ€¦ */
+    --ticker-pad-bot: 22px; /* â€¦a bit more on bottom to lift cards */
     --ticker-card-scale: 0.85; /* ~15% smaller than full height */
     --ticker-speed: 32s; /* adjust to taste */
 }
@@ -1008,7 +1008,7 @@ footer {
     animation-play-state: paused;
 }
 
-/* seamless loop — 3 identical copies = 1/3 shift per cycle */
+/* seamless loop â€” 3 identical copies = 1/3 shift per cycle */
 @keyframes ticker-loop-3 {
     from {
         transform: translateX(0);
@@ -1137,14 +1137,14 @@ footer {
     left: -6%;
     right: -6%;
     bottom: -10%;
-    background-position: top center; /* <— keep the top visible */
+    background-position: top center; /* <â€” keep the top visible */
     background-size: cover;
     background-repeat: no-repeat;
     opacity: 0.10;
     filter: saturate(0.7) brightness(1.05);
     /* Parallax transform starts neutral; scale adds a little safety bleed */
     transform: translate3d(0,0,0) scale(1.06);
-    transform-origin: top center; /* <— all transforms pivot from the top edge */
+    transform-origin: top center; /* <â€” all transforms pivot from the top edge */
 
     will-change: transform;
     pointer-events: none;
@@ -1424,7 +1424,7 @@ footer {
     margin-bottom: 18px;
 }
 
-/* Main “punch card” */
+/* Main â€œpunch cardâ€ */
 .rewards-card {
     flex: 1 1 760px;
     background: linear-gradient(180deg, #0f2626, #0b1f1f);
@@ -1577,7 +1577,7 @@ footer {
         vector-effect: non-scaling-stroke;
     }
 
-    /* Industrial (excavator) — make it larger but keep the same color.
+    /* Industrial (excavator) â€” make it larger but keep the same color.
    Change the value below to whatever size you want (e.g., 82px). */
     .subtabs-lg .subtab-ico svg.excavator-ico {
         --subtab-ico: 62px; 
@@ -1689,4 +1689,76 @@ footer {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+}
+/* ===== Industrial â†’ Jobsite Services: big, stylish buttons ===== */
+#industrial-build .addon-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    align-items: stretch;
+}
+
+    #industrial-build .addon-chips .chip {
+        /* Button-y look */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 16px;
+        height: 56px;
+        border-radius: 14px;
+        border: 1.5px solid var(--line);
+        background: linear-gradient(180deg, rgba(16,39,39,.85), rgba(10,26,26,.85));
+        box-shadow: 0 1px 0 rgba(0,0,0,.25);
+        color: var(--ink);
+        font-size: 15px;
+        line-height: 1.2;
+        white-space: normal; /* allow wrap for long labels */
+        text-align: left;
+        cursor: pointer;
+        transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+        #industrial-build .addon-chips .chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0,0,0,.25);
+            border-color: rgba(255,255,255,.18);
+        }
+
+        #industrial-build .addon-chips .chip:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(0,0,0,.25) inset;
+        }
+
+        #industrial-build .addon-chips .chip.on {
+            border-color: var(--sun);
+            background: linear-gradient(180deg, rgba(26,62,62,.95), rgba(14,38,38,.95));
+            box-shadow: 0 0 0 1px color-mix(in oklab, var(--sun) 40%, transparent);
+        }
+
+        #industrial-build .addon-chips .chip:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0,0,0,.55), 0 0 0 4px color-mix(in oklab, var(--sun) 55%, transparent);
+        }
+
+        /* Price text on the right (you already render it with .tiny.muted) */
+        #industrial-build .addon-chips .chip .tiny {
+            margin-left: 10px;
+            opacity: .9;
+            font-weight: 600;
+        }
+
+/* Compact on small screens */
+@media (max-width: 640px) {
+    #industrial-build .addon-chips {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+    }
+
+        #industrial-build .addon-chips .chip {
+            height: 52px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
 }
