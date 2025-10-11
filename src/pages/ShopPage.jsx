@@ -82,7 +82,7 @@ export default function ShopPage(){
 
       </div>
 
-      <div className="shop-layout" style={{ paddingTop: '50px' }}>
+      <div className="shop-layout" style={{ paddingBottom: '50px' }}>
         <div className="shop-main">
           {current === 'res' && <Residential />}
           {current === 'ind' && <Industrial />}
