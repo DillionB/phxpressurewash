@@ -1583,3 +1583,32 @@ footer {
         --subtab-ico: 62px; 
     }
 
+/* Compact, button-like service options (same row style as chips but bolder) */
+.option-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.option-btn {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: #102727;
+    color: var(--ink);
+    padding: 8px 12px;
+    border-radius: 999px;
+    line-height: 1.1;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .05s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+    .option-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .option-btn.on {
+        border-color: var(--sun);
+        box-shadow: inset 0 0 0 2px var(--sun-2), 0 0 0 3px rgba(255,166,43,.15);
+    }

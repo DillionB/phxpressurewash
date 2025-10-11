@@ -30,7 +30,7 @@ export default function Commercial() {
         { id: 'awning', label: '🏬 Awning Cleaning' },
     ], [])
 
-    const [selected, setSelected] = useState < string[] > ([])
+    const [selected, setSelected] = useState([])
     const [note, setNote] = useState('')
     const [sending, setSending] = useState(false)
     const [form, setForm] = useState({
@@ -51,19 +51,19 @@ export default function Commercial() {
         if (PUBLIC_KEY) emailjs.init(PUBLIC_KEY)
     }, [])
 
-    const toggle = (id: string) =>
+    const toggle = (id) =>
         setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
 
-    const formatPhone = (val: string) => {
+    const formatPhone = (val) => {
         const d = (val || '').replace(/\D/g, '').slice(0, 10)
         const p1 = d.slice(0, 3), p2 = d.slice(3, 6), p3 = d.slice(6, 10)
         return [p1, p2, p3].filter(Boolean).join('-')
     }
 
-    const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    const onChange = (e) =>
         setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
-    const send = async (e: React.FormEvent) => {
+    const send = async (e) => {
         e.preventDefault()
         if (selected.length === 0) return setNote('Pick at least one service.')
         if (!form.business || !form.address) return setNote('Business and address are required.')
@@ -105,7 +105,7 @@ export default function Commercial() {
 
             await emailjs.send(SERVICE_ID, TEMPLATE_ID, params, PUBLIC_KEY)
             setNote('✅ Thanks! We received your request — we’ll follow up shortly.')
-        } catch (err: any) {
+        } catch (err) {
             const msg = err?.text || err?.message || 'Unknown error'
             setNote(`⚠️ Send failed: ${msg}`)
         } finally {

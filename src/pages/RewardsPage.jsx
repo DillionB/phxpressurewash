@@ -128,7 +128,7 @@ export default function RewardsPage(){
       <div className="grid cols-3 tiers-grid">
         <article className="card tier-card">
           <div className="badge">Tier 1</div>
-          <h4>3 Punches -> 10% Off</h4>
+                  <h4>3 Punches -&gt; 10% Off</h4>
           <p className="muted">Automatically issued as a promo after 3 punches.</p>
         </article>
 
