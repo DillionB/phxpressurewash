@@ -1852,3 +1852,146 @@ footer {
             transform: none;
         }
 }
+/* --- Cart compact layout --- */
+.cart-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+}
+
+.cart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cart-title {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.cart-count {
+    inline-size: 26px;
+    block-size: 26px;
+    display: inline-grid;
+    place-items: center;
+    font-weight: 700;
+    border: 1px solid var(--sun);
+    color: var(--sun);
+    border-radius: 999px;
+    font-size: 12px;
+}
+
+/* Scroll area that prevents page stretch */
+.cart-lines {
+    max-block-size: clamp(160px, 38vh, 380px);
+    overflow: auto;
+    padding-right: 2px; /* keep scrollbar off text */
+    display: grid;
+    gap: 10px;
+}
+
+/* each line */
+.cart-line {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: start;
+    border: 1px dashed color-mix(in oklab, var(--sun) 32%, transparent);
+    border-radius: 12px;
+    padding: 10px;
+    background: color-mix(in oklab, var(--sun) 6%, transparent);
+}
+
+.cart-line-main {
+    min-width: 0; /* enable text truncation */
+}
+
+.cart-line-title {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 2px;
+}
+
+.cart-line-sub {
+    color: var(--muted);
+}
+
+.cart-line-tags {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.tag-chip {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--sun) 35%, transparent);
+    color: color-mix(in oklab, var(--ink) 90%, var(--sun));
+    background: color-mix(in oklab, var(--sun) 12%, transparent);
+}
+
+/* right column: price + remove */
+.cart-line-right {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+}
+
+.cart-line-price {
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.cart-remove {
+    inline-size: 26px;
+    block-size: 26px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    transition: transform .12s ease, border-color .12s ease, color .12s ease, background .12s ease;
+}
+
+    .cart-remove:hover {
+        color: var(--ink);
+        border-color: color-mix(in oklab, var(--sun) 40%, transparent);
+        background: color-mix(in oklab, var(--sun) 10%, transparent);
+        transform: scale(1.05);
+    }
+
+/* footer row "sticks" visually without true sticky */
+.cart-footer-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--sun) 10%, transparent);
+    border: 1px solid color-mix(in oklab, var(--sun) 25%, transparent);
+}
+
+/* primary checkout full-width */
+.cart-checkout-btn {
+    width: 100%;
+}
+
+/* tiny note spacing */
+.cart-note {
+    margin: 2px 0 0 0;
+}
+
+/* Make the whole card behave nicely inside your sidebar */
+.shop-side .cart.card {
+    position: sticky;
+    top: 16px;
+}

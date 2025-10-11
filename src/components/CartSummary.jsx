@@ -1,44 +1,74 @@
+// src/components/CartSummary.jsx
 import React from 'react'
 import { useCart } from '../state/CartContext'
 import CheckoutButton from './CheckoutButton.jsx'
 
 export default function CartSummary() {
-    const { items, subtotal, removeItem, clearCart } = useCart()
+    const { items, subtotal, removeItem } = useCart()
+
+    const fmt = (n) => (n || 0).toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 
     return (
-        <aside className="cart card" aria-label="Cart">
-            <h3 style={{ marginTop: 0 }}>Your Cart</h3>
+        <aside className="cart card cart-compact" aria-label="Cart">
+            <div className="cart-head">
+                <h3 className="cart-title">Your Cart</h3>
+                <span className="cart-count" aria-label={`${items.length} items in cart`}>
+                    {items.length}
+                </span>
+            </div>
 
-            {items.length === 0 && <p className="small">No items yet.</p>}
+            {items.length === 0 && (
+                <p className="small muted" style={{ margin: 0 }}>No items yet.</p>
+            )}
 
-            {items.map(item => (
-                <div key={item.id || `${item.title}-${Math.random()}`} className="cart-line">
-                    <div>
-                        <b>{item.title}</b>
-                        {item.detail && <div className="small">{item.detail}</div>}
-                        {item.meta && item.meta.length > 0 &&
-                            <div className="small">Notes: {item.meta.join(', ')}</div>}
-                    </div>
-                    <div className="cart-right">
-                        <div>${(item.subtotal || 0).toFixed(2)}</div>
-                        <button className="mini-btn" onClick={() => removeItem(item.id)}>Remove</button>
-                    </div>
+            {/* Scroll area */}
+            {items.length > 0 && (
+                <div className="cart-lines" role="list">
+                    {items.map((item) => (
+                        <div
+                            key={item.id || `${item.title}-${Math.random()}`}
+                            className="cart-line"
+                            role="listitem"
+                        >
+                            <div className="cart-line-main">
+                                <div className="cart-line-title">{item.title}</div>
+                                {item.detail && <div className="cart-line-sub small">{item.detail}</div>}
+                                {item.meta && item.meta.length > 0 && (
+                                    <div className="cart-line-tags">
+                                        {item.meta.map((m, i) => (
+                                            <span className="tag-chip" key={`${m}-${i}`}>{m}</span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="cart-line-right">
+                                <div className="cart-line-price">{fmt(item.subtotal)}</div>
+                                <button
+                                    className="cart-remove"
+                                    aria-label={`Remove ${item.title}`}
+                                    title="Remove"
+                                    type="button"
+                                    onClick={() => removeItem(item.id)}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            ))}
+            )}
 
-            <div className="cart-footer">
-                <div><b>Subtotal</b></div>
-                <div><b>${subtotal.toFixed(2)}</b></div>
+            {/* Sticky-ish footer */}
+            <div className="cart-footer-row" aria-live="polite">
+                <span>Subtotal</span>
+                <b>{fmt(subtotal)}</b>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {/* Secure Stripe Checkout */}
-                <CheckoutButton className="cta" />
-                <button className="mini-btn" onClick={clearCart}>Clear</button>
-            </div>
+            <CheckoutButton className="cta cart-checkout-btn" />
 
-            <p className="small" style={{ marginTop: 8, opacity: .8 }}>
-                Totals shown here are estimates. Final pricing confirmed after site assessment.
+            <p className="tiny muted cart-note">
+                Totals are estimates. Final pricing confirmed after site assessment.
             </p>
         </aside>
     )
