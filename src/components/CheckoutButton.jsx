@@ -75,30 +75,7 @@ export default function CartSummary() {
 
   return (
     <aside className="cart card" aria-label="Cart">
-      <h3 style={{ marginTop: 0 }}>Your Cart</h3>
-
-      {items.length === 0 && <p className="small">No items yet.</p>}
-
-      {items.map(item => (
-        <div key={item.id} className="cart-line">
-          <div>
-            <b>{item.title}</b>
-            {item.detail && <div className="small">{item.detail}</div>}
-            {!!item.qty && item.qty > 1 && (
-              <div className="small" style={{ opacity: .8 }}>
-                Qty: {item.qty}
-              </div>
-            )}
-            {item.meta && item.meta.length > 0 && (
-              <div className="small">Notes: {item.meta.join(', ')}</div>
-            )}
-          </div>
-          <div className="cart-right">
-            <div>${(Number(item.subtotal || 0)).toFixed(2)}</div>
-            <button className="mini-btn" onClick={() => removeItem(item.id)}>Remove</button>
-          </div>
-        </div>
-      ))}
+     
 
       <div className="cart-footer">
         <div><b>Subtotal</b></div>
