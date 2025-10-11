@@ -1,28 +1,25 @@
 ﻿// src/components/CartSummary.jsx
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useCart } from '../state/CartContext'
 import { supabase } from '../lib/supabase'
 import { geocodeAddress, distanceMiles } from '../utils/geocode.js'
 import emailjs from '@emailjs/browser'
 
-// Same origin + radius as Hero
 const ORIGIN_ADDRESS = '25297 N 163rd Dr, Surprise, AZ'
 const RADIUS_MILES = 15
 
 // EmailJS env
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
-const TEMPLATE_ID_FALLBACK = import.meta.env.VITE_EMAILJS_TEMPLATE_ID         // (existing)
-const TEMPLATE_ID_CART = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_CART     // (NEW, preferred)
+const TEMPLATE_ID_FALLBACK = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+const TEMPLATE_ID_CART = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_CART
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 
 export default function CartSummary() {
     const { items, subtotal, removeItem } = useCart()
 
-    // UI & flow
     const [note, setNote] = useState('')
     const [busy, setBusy] = useState(false)
 
-    // Address / contact
     const [showAddr, setShowAddr] = useState(false)
     const [outOfRange, setOutOfRange] = useState(false)
     const [miles, setMiles] = useState(null)
@@ -31,12 +28,14 @@ export default function CartSummary() {
         address: '', city: '', state: '', zip: '',
     })
 
+    // prevent multiple auto-runs on same state
+    const lastProcessedSig = useRef('')
+
     useEffect(() => { if (PUBLIC_KEY) emailjs.init(PUBLIC_KEY) }, [])
 
     const fmtUSD = (n) =>
         (Number(n || 0)).toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 
-    // Normalize cart for Stripe
     const normalized = useMemo(() => (items || []).map(l => {
         const qty = Math.max(1, Number(l.qty || 1))
         const total = Number(l.subtotal || 0)
@@ -86,28 +85,17 @@ export default function CartSummary() {
         }
     }
 
-    // ---- MAIN CTA click handler (single button drives everything) ----
+    // MAIN CTA (still supports the manual flow)
     const onPrimary = async () => {
         setNote('')
+        if (!items?.length) return setNote('Your cart is empty.')
+        if (!billable.length) return setNote('All items are $0 — add a priced service first.')
 
-        if (!items || items.length === 0) {
-            setNote('Your cart is empty.')
-            return
-        }
-        if (!billable.length) {
-            setNote('All items are $0 — add a priced service first.')
-            return
-        }
-
-        // If the mini form is open…
         if (showAddr) {
-            // Out of range? -> Send email
             if (outOfRange) return sendOutOfAreaEmail()
-            // Otherwise -> check radius and proceed accordingly
-            return validateRadiusAndContinue()
+            return validateRadiusAndContinue({ autoSendIfOut: false })
         }
 
-        // Otherwise try to prefill and decide whether to open address form
         const prefilled = await tryPrefillFromProfile()
         const haveAddr =
             !!addressString().trim() &&
@@ -121,11 +109,43 @@ export default function CartSummary() {
             return
         }
 
-        // Already have address → check radius
-        await validateRadiusAndContinue()
+        await validateRadiusAndContinue({ autoSendIfOut: false })
     }
 
-    const validateRadiusAndContinue = async () => {
+    // AUTO proceed when user is signed in and address is present
+    useEffect(() => {
+        const run = async () => {
+            if (!items?.length || !billable.length || busy) return
+            // Don't auto-run if user already opened the form or we flagged out-of-range
+            if (showAddr || outOfRange) return
+
+            // Create a signature for current state
+            const sig = JSON.stringify({
+                items: items.map(i => [i.title, i.subtotal, i.qty]),
+                addr: addressString(),
+                name: addr.name, email: addr.email, phone: addr.phone,
+                subtotal
+            })
+            if (sig === lastProcessedSig.current) return
+
+            // Try to prefill and determine if we can proceed
+            const prefilled = await tryPrefillFromProfile()
+            const haveAddr =
+                !!addressString().trim() &&
+                (!!addr.name || prefilled) &&
+                (!!addr.email || prefilled)
+
+            if (!haveAddr) return // keep button behavior; we won't force-open the form here
+
+            lastProcessedSig.current = sig
+            await validateRadiusAndContinue({ autoSendIfOut: true })
+        }
+
+        run()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [items, billable.length, addr.address, addr.city, addr.state, addr.zip, addr.name, addr.email, addr.phone, subtotal, busy, showAddr, outOfRange])
+
+    const validateRadiusAndContinue = async ({ autoSendIfOut }) => {
         setBusy(true); setNote('Checking service area…')
         try {
             const origin = await geocodeOrigin()
@@ -137,7 +157,10 @@ export default function CartSummary() {
                 await launchStripeCheckout()
             } else {
                 setOutOfRange(true)
-                setNote(`You're ~${d.toFixed(1)} miles away — outside our ${RADIUS_MILES}-mile radius. Send a quick quote request instead.`)
+                setNote(`You're ~${d.toFixed(1)} miles away — outside our ${RADIUS_MILES}-mile radius.${autoSendIfOut ? ' Sending a quick quote request…' : ' You can send a quick quote request instead.'}`)
+                if (autoSendIfOut) {
+                    await sendOutOfAreaEmail()
+                }
             }
         } catch (e) {
             console.error('Geocode error:', e)
@@ -181,7 +204,7 @@ export default function CartSummary() {
         }
     }
 
-    // ---- Email cart summary when out of range ----
+    // Out-of-area email (used by auto and manual)
     const sendOutOfAreaEmail = async () => {
         const templateToUse = TEMPLATE_ID_CART || TEMPLATE_ID_FALLBACK
         if (!SERVICE_ID || !templateToUse || !PUBLIC_KEY) {
@@ -202,18 +225,15 @@ export default function CartSummary() {
             }).join('\n')
 
             const params = {
-                // contact
                 from_name: addr.name,
                 reply_to: addr.email,
                 user_email: addr.email,
                 customer_phone: addr.phone,
-                // address
                 service_address: addressString(),
                 address_line: addr.address,
                 address_city: addr.city,
                 address_state: addr.state,
                 address_zip: addr.zip,
-                // cart
                 cart_summary: cartLines,
                 cart_subtotal: fmtUSD(subtotal),
                 distance_miles: miles != null ? miles.toFixed(1) : '',
@@ -232,7 +252,6 @@ export default function CartSummary() {
         }
     }
 
-    // ---- Primary CTA label (one button, changing copy) ----
     const primaryLabel = (() => {
         if (busy) return 'Working…'
         if (!items?.length) return 'Cart is empty'
@@ -242,8 +261,7 @@ export default function CartSummary() {
         return 'Check Address & Continue'
     })()
 
-    const primaryDisabled =
-        busy || !items?.length || !billable.length
+    const primaryDisabled = busy || !items?.length || !billable.length
 
     return (
         <aside className="cart card cart-compact" aria-label="Cart">
@@ -296,7 +314,6 @@ export default function CartSummary() {
                 <b>{fmtUSD(subtotal)}</b>
             </div>
 
-            {/* Single CTA drives the whole flow */}
             <button
                 className="cta cart-checkout-btn"
                 onClick={onPrimary}
@@ -305,7 +322,6 @@ export default function CartSummary() {
                 {primaryLabel}
             </button>
 
-            {/* Inline address/contact form appears only when needed */}
             {showAddr && (
                 <div className="cart-inline-form" role="region" aria-label="Service address">
                     <div className="small" style={{ marginBottom: 8 }}>
