@@ -10,7 +10,7 @@ const PHONE = import.meta.env.VITE_BUSINESS_PHONE || ''
 export default function Commercial() {
     const navigate = useNavigate()
 
-    // Full competitor list with emojis
+    // Full competitor list with emojis (buttons)
     const serviceOptions = useMemo(() => [
         { id: 'power', label: '⚡ Power Washing' },
         { id: 'building', label: '🏢 Building Washing' },
@@ -22,6 +22,7 @@ export default function Commercial() {
         { id: 'lot', label: '🅿️ Parking Lot Sweeping' },
         { id: 'porter', label: '🧑‍🔧 Day Porter' },
         { id: 'fleet', label: '🚚 Fleet Washing' },
+        { id: 'roof', label: '🏠 Roof Cleaning' },
         { id: 'garages', label: '🅿️ Parking Garages' },
         { id: 'gutter', label: '🪣 Gutter Cleaning' },
         { id: 'dumpster', label: '🗑️ Dumpster Pads' },
@@ -29,7 +30,7 @@ export default function Commercial() {
         { id: 'awning', label: '🏬 Awning Cleaning' },
     ], [])
 
-    const [selected, setSelected] = useState([])
+    const [selected, setSelected] = useState < string[] > ([])
     const [note, setNote] = useState('')
     const [sending, setSending] = useState(false)
     const [form, setForm] = useState({
@@ -50,18 +51,19 @@ export default function Commercial() {
         if (PUBLIC_KEY) emailjs.init(PUBLIC_KEY)
     }, [])
 
-    const toggle = (id) =>
-        setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+    const toggle = (id: string) =>
+        setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
 
-    const formatPhone = (val) => {
+    const formatPhone = (val: string) => {
         const d = (val || '').replace(/\D/g, '').slice(0, 10)
         const p1 = d.slice(0, 3), p2 = d.slice(3, 6), p3 = d.slice(6, 10)
         return [p1, p2, p3].filter(Boolean).join('-')
     }
 
-    const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+    const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+        setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
-    const send = async (e) => {
+    const send = async (e: React.FormEvent) => {
         e.preventDefault()
         if (selected.length === 0) return setNote('Pick at least one service.')
         if (!form.business || !form.address) return setNote('Business and address are required.')
@@ -103,7 +105,7 @@ export default function Commercial() {
 
             await emailjs.send(SERVICE_ID, TEMPLATE_ID, params, PUBLIC_KEY)
             setNote('✅ Thanks! We received your request — we’ll follow up shortly.')
-        } catch (err) {
+        } catch (err: any) {
             const msg = err?.text || err?.message || 'Unknown error'
             setNote(`⚠️ Send failed: ${msg}`)
         } finally {
@@ -118,10 +120,34 @@ export default function Commercial() {
                 One team for storefronts, centers, HOAs & facilities — quick quote, no hassle.
             </p>
 
-            {/* Single, concise form — two-column grid on desktop, one on mobile */}
+            {/* Single compact card with EVERYTHING on one form */}
             <div className="card scheduler">
-                <h3 style={{ marginTop: 0 }}>Quote details</h3>
                 <form onSubmit={send}>
+                    {/* Options row (buttons) */}
+                    <div className="full">
+                        <h3 style={{ margin: '0 0 8px' }}>Select services</h3>
+                        <div className="option-grid" role="group" aria-label="Services">
+                            {serviceOptions.map(opt => {
+                                const on = selected.includes(opt.id)
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        className={`option-btn ${on ? 'on' : ''}`}
+                                        onClick={() => toggle(opt.id)}
+                                        aria-pressed={on}
+                                        title={opt.label}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                        <p className="tiny muted" style={{ marginTop: 6 }}>
+                            Need something not listed? Add it in notes below.
+                        </p>
+                    </div>
+
                     {/* Business & address */}
                     <div className="full">
                         <label htmlFor="business">Business / Organization</label>
@@ -185,7 +211,7 @@ export default function Commercial() {
                             placeholder="xxx-xxx-xxxx"
                             maxLength={12}
                             value={form.phone}
-                            onChange={(e) => setForm((f) => ({ ...f, phone: formatPhone(e.target.value) }))}
+                            onChange={(e) => setForm(f => ({ ...f, phone: formatPhone(e.target.value) }))}
                             required
                         />
                     </div>
@@ -194,28 +220,16 @@ export default function Commercial() {
                         <input id="email" name="email" type="email" autoComplete="email" value={form.email} onChange={onChange} required />
                     </div>
 
-                    <div className="card" style={{ marginBottom: 12 }}>
-                        <h3 style={{ margin: '0 0 8px' }}>Select services</h3>
-                        <div className="addon-chips" role="list" style={{ marginTop: 6 }}>
-                            {serviceOptions.map(opt => {
-                                const on = selected.includes(opt.id)
-                                return (
-                                    <button
-                                        key={opt.id}
-                                        type="button"
-                                        className={`chip ${on ? 'on' : ''}`}
-                                        onClick={() => toggle(opt.id)}
-                                        aria-pressed={on}
-                                        title={opt.label}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                )
-                            })}
-                        </div>
-                        <p className="tiny muted" style={{ marginTop: 6 }}>
-                            Need something not listed? Give us a call! 
-                        </p>
+                    {/* Notes */}
+                    <div className="full">
+                        <label htmlFor="notes">Notes</label>
+                        <textarea
+                            id="notes"
+                            name="notes"
+                            value={form.notes}
+                            onChange={onChange}
+                            placeholder="Surfaces, timing, hazards, water access, other requests."
+                        />
                     </div>
 
                     <div className="builder-footer" style={{ paddingTop: 8 }}>
