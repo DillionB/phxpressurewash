@@ -18,6 +18,7 @@ export default function CartSummary() {
 
     const [note, setNote] = useState('')
     const [busy, setBusy] = useState(false)
+    const [requireAddrConfirm, setRequireAddrConfirm] = useState(false)
 
     // UI flow
     const [showAddr, setShowAddr] = useState(false)
@@ -86,9 +87,18 @@ export default function CartSummary() {
         if (!items?.length) return setNote('Your cart is empty.')
         if (!billable.length) return setNote('All items are $0 — add a priced service first.')
 
+        // If we’re already showing the form, run the usual branch
         if (showAddr) {
             if (outOfRange) return sendOutOfAreaEmail()
             return validateRadiusAndContinue()
+        }
+
+        // NEW: force a reconfirmation pass if user previously hit Back
+        if (requireAddrConfirm) {
+            setShowAddr(true)
+            setOutOfRange(false)
+            setNote('Confirm your service address to continue.')
+            return
         }
 
         const prefilled = await tryPrefillFromProfile()
@@ -106,6 +116,7 @@ export default function CartSummary() {
 
         await validateRadiusAndContinue()
     }
+
 
     const validateRadiusAndContinue = async () => {
         setBusy(true); setNote('Checking service area…')
@@ -324,11 +335,17 @@ export default function CartSummary() {
                             <button
                                 type="button"
                                 className="mini-btn"
-                                onClick={() => { setShowAddr(false); setOutOfRange(false); setNote('') }}
+                                onClick={() => {
+                                    setShowAddr(false)
+                                    setOutOfRange(false)
+                                    setNote('')
+                                    setRequireAddrConfirm(true)   // ← NEW: require reconfirmation next time
+                                }}
                                 disabled={busy}
                             >
                                 ← Back
                             </button>
+
 
                             <button
                                 type="button"
