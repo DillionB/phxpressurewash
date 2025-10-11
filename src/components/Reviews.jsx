@@ -136,7 +136,6 @@ export default function Reviews() {
             const filtered = prev.filter(r => r.id !== data.id)
             return [{ ...data, created_at: new Date().toISOString() }, ...filtered]
         })
-        // jump to top so they see it
         wallTopRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
@@ -165,10 +164,35 @@ export default function Reviews() {
                 <div className="tiny muted">{reviews.length} review{reviews.length === 1 ? '' : 's'}</div>
             </div>
 
-            {/* Masonry wall using CSS columns; composer is a card in the wall */}
+            {/* Masonry wall */}
             <div className="reviews-wall">
-                {/* Composer/Login card */}
-                <article className="review-card card composer-card">
+                {reviews.map(r => (
+                    <article key={r.id} className="review-card card">
+                        <div className="review-card-stars" aria-hidden="true">
+                            {[1, 2, 3, 4, 5].map(n =>
+                                <span key={n} className={`star ${n <= r.rating ? 'on' : ''}`}>★</span>
+                            )}
+                        </div>
+                        <p className="review-body">{r.body}</p>
+                        <div className="review-meta tiny muted">
+                            {r.display_name ? r.display_name : 'Verified customer'} • {fmtDate(r.created_at)}
+                        </div>
+                    </article>
+                ))}
+                {!reviews.length && (
+                    <div className="small muted" style={{ padding: 12 }}>No reviews yet.</div>
+                )}
+            </div>
+
+            {hasMore && (
+                <div className="load-more-wrap">
+                    <button className="mini-btn" onClick={() => loadPage(false)}>Load more</button>
+                </div>
+            )}
+
+            {/* Centered, bottom-docked composer/login (sticky above footer) */}
+            <div className="composer-dock">
+                <article className="card composer-inner">
                     {!signedIn ? (
                         <div>
                             <h4 className="composer-title">Leave a review</h4>
@@ -202,28 +226,7 @@ export default function Reviews() {
                         </div>
                     )}
                 </article>
-
-                {/* Review cards */}
-                {reviews.map(r => (
-                    <article key={r.id} className="review-card card">
-                        <div className="review-card-stars" aria-hidden="true">
-                            {[1, 2, 3, 4, 5].map(n =>
-                                <span key={n} className={`star ${n <= r.rating ? 'on' : ''}`}>★</span>
-                            )}
-                        </div>
-                        <p className="review-body">{r.body}</p>
-                        <div className="review-meta tiny muted">
-                            {r.display_name ? r.display_name : 'Verified customer'} • {fmtDate(r.created_at)}
-                        </div>
-                    </article>
-                ))}
             </div>
-
-            {hasMore && (
-                <div className="load-more-wrap">
-                    <button className="mini-btn" onClick={() => loadPage(false)}>Load more</button>
-                </div>
-            )}
         </div>
     )
 }

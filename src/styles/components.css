@@ -2504,3 +2504,145 @@ footer {
     .stars .star:hover {
         transform: scale(1.08);
     }
+/* Layout wrapper in normal flow */
+.reviews-wall-wrap {
+    display: grid;
+    gap: 14px;
+}
+
+/* Header bar */
+.reviews-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+}
+
+    .reviews-bar .avg-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+.stars {
+    display: inline-flex;
+    gap: 2px;
+}
+
+    .stars .star {
+        font-size: 18px;
+        line-height: 1;
+        opacity: .5;
+        color: var(--ink);
+    }
+
+        .stars .star.on {
+            opacity: 1;
+            color: var(--sun);
+        }
+
+    .stars.readonly .star {
+        cursor: default;
+    }
+
+/* Masonry wall (cards auto-height; smaller footprint) */
+.reviews-wall {
+    column-gap: 12px;
+    column-count: 1;
+}
+
+@media (min-width: 560px) {
+    .reviews-wall {
+        column-count: 2;
+    }
+}
+
+@media (min-width: 900px) {
+    .reviews-wall {
+        column-count: 3;
+    }
+}
+
+@media (min-width: 1200px) {
+    .reviews-wall {
+        column-count: 4;
+    }
+}
+
+.review-card {
+    break-inside: avoid;
+    display: block;
+    margin: 0 0 12px;
+    padding: 10px; /* smaller padding */
+    min-height: 64px; /* smaller minimum size (~half-ish) */
+}
+
+    .review-card .review-card-stars {
+        color: var(--ink);
+        opacity: .55;
+        font-size: 0.95rem;
+    }
+
+    .review-card .star.on {
+        color: var(--sun);
+        opacity: 1;
+    }
+
+    .review-card .review-body {
+        margin: 6px 0 0;
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+        line-height: 1.35;
+        max-height: 20rem; /* cap giant reviews */
+        overflow: auto; /* scroll inside card if too long */
+    }
+
+.review-meta {
+    margin-top: 6px;
+}
+
+/* Load more */
+.load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 0;
+}
+
+/* Bottom-centered composer dock (sticks above footer, does not overlap it) */
+.composer-dock {
+    position: sticky;
+    bottom: 12px; /* sits just above viewport bottom while scrolling */
+    display: flex;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: none; /* make outer container click-through */
+}
+
+    .composer-dock .composer-inner {
+        pointer-events: auto; /* but card itself is interactive */
+        width: min(760px, 96%);
+        padding: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.18);
+        backdrop-filter: blur(6px);
+    }
+
+/* Composer content */
+.composer-title {
+    margin: 0 0 6px;
+}
+
+.composer-inner textarea, .composer-inner input {
+    width: 100%;
+}
+
+/* Interactive stars */
+.stars .star {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: transform .08s ease, opacity .12s ease, color .12s ease;
+}
+
+    .stars .star:hover {
+        transform: scale(1.08);
+    }
