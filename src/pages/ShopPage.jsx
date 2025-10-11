@@ -39,18 +39,6 @@ export default function ShopPage() {
                     </span>
                     <span className="subtab-label">Residential</span>
                 </NavLink>
-
-                <NavLink
-                    to="/services/com"
-                    className={`subtab-btn ${current === 'com' ? 'active' : ''}`}
-                    aria-current={current === 'com' ? 'page' : undefined}
-                >
-                    <span className="subtab-ico" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M3 9l2-4h14l2 4M5 9v10h14V9M8 9v10M16 9v10M9 13h6" /></svg>
-                    </span>
-                    <span className="subtab-label">Commercial</span>
-                </NavLink>
-
                 <NavLink
                     to="/services/ind"
                     className={`subtab-btn ${current === 'ind' ? 'active' : ''}`}
@@ -79,6 +67,18 @@ export default function ShopPage() {
 
                     <span className="subtab-label">Industrial</span>
                 </NavLink>
+                <NavLink
+                    to="/services/com"
+                    className={`subtab-btn ${current === 'com' ? 'active' : ''}`}
+                    aria-current={current === 'com' ? 'page' : undefined}
+                >
+                    <span className="subtab-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M3 9l2-4h14l2 4M5 9v10h14V9M8 9v10M16 9v10M9 13h6" /></svg>
+                    </span>
+                    <span className="subtab-label">Commercial</span>
+                </NavLink>
+
+                
 
             </div>
 
