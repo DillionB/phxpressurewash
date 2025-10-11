@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 function StarPicker({ value, onChange, disabled }) {
@@ -21,23 +21,23 @@ function StarPicker({ value, onChange, disabled }) {
 
 export default function Reviews() {
     const [session, setSession] = useState(null)
-    const [loading, setLoading] = useState(true)
-
-    // Composer state (user’s review)
     const [myReview, setMyReview] = useState(null)
     const [rating, setRating] = useState(5)
     const [body, setBody] = useState('')
     const [displayName, setDisplayName] = useState('')
     const [note, setNote] = useState('')
+    const [loading, setLoading] = useState(true)
 
-    // Board state
+    // Wall data
     const [reviews, setReviews] = useState([])
     const [page, setPage] = useState(0)
-    const pageSize = 12
+    const pageSize = 18
     const [hasMore, setHasMore] = useState(true)
     const signedIn = !!session?.user
 
-    // Auth bootstrap
+    const wallTopRef = useRef(null)
+
+    // Auth
     useEffect(() => {
         let mounted = true
             ; (async () => {
@@ -50,7 +50,7 @@ export default function Reviews() {
         return () => sub?.subscription?.unsubscribe?.()
     }, [])
 
-    // Load user's existing review into composer
+    // Load existing review for composer
     useEffect(() => {
         if (!signedIn) { setMyReview(null); setBody(''); setDisplayName(''); setRating(5); return }
         let mounted = true
@@ -71,7 +71,7 @@ export default function Reviews() {
         return () => { mounted = false }
     }, [signedIn, session?.user?.id])
 
-    // Load grid page
+    // Load a page of reviews
     const loadPage = async (reset = false) => {
         const from = reset ? 0 : page * pageSize
         const to = from + pageSize - 1
@@ -93,8 +93,9 @@ export default function Reviews() {
     }
     useEffect(() => { loadPage(true) }, [])
 
-    // Paid order check
-    const checkPaid = async () => {
+    // Verify at least one paid/complete order
+    const userCanReview = async () => {
+        if (!signedIn) return false
         const { data, error } = await supabase
             .from('orders')
             .select('id')
@@ -111,12 +112,13 @@ export default function Reviews() {
         if ((body || '').trim().length < 5) { setNote('Please write at least 5 characters.'); return }
         if (rating < 1 || rating > 5) { setNote('Rating must be 1–5.'); return }
 
-        const paid = await checkPaid()
-        if (!paid) { setNote('Reviews are limited to customers who completed an order.'); return }
+        const ok = await userCanReview()
+        if (!ok) { setNote('Reviews are limited to customers who completed an order.'); return }
 
         const row = {
             user_id: session.user.id,
-            rating, body,
+            rating,
+            body,
             display_name: displayName || null
         }
 
@@ -128,7 +130,14 @@ export default function Reviews() {
 
         setMyReview(data)
         setNote('✅ Review saved!')
-        await loadPage(true)
+
+        // Optimistic: put/update at the top of the wall immediately
+        setReviews(prev => {
+            const filtered = prev.filter(r => r.id !== data.id)
+            return [{ ...data, created_at: new Date().toISOString() }, ...filtered]
+        })
+        // jump to top so they see it
+        wallTopRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
     const avg = useMemo(() => {
@@ -136,10 +145,12 @@ export default function Reviews() {
         return (reviews.reduce((a, r) => a + (r.rating || 0), 0) / reviews.length).toFixed(1)
     }, [reviews])
 
+    const fmtDate = (d) => new Date(d).toLocaleDateString()
+
     return (
-        <div className="reviews-page-wrap">
-            {/* Top bar */}
-            <div className="reviews-bar card">
+        <div className="reviews-wall-wrap">
+            {/* Header bar */}
+            <div className="reviews-bar card" ref={wallTopRef}>
                 <div>
                     <div className="tiny muted">Average rating</div>
                     <div className="avg-line">
@@ -154,48 +165,45 @@ export default function Reviews() {
                 <div className="tiny muted">{reviews.length} review{reviews.length === 1 ? '' : 's'}</div>
             </div>
 
-            {/* Centered composer/login (in-flow, not overlapping footer) */}
-            <section className="composer-center card">
-                {!signedIn ? (
-                    <div className="composer-inner">
-                        <h4 className="composer-title">Leave a review</h4>
-                        <p className="small muted" style={{ marginTop: 0 }}>
-                            Sign in to post a review (customers only).
-                        </p>
-                        <a className="cta" href="/account">Sign In / Create Account</a>
-                    </div>
-                ) : (
-                    <div className="composer-inner">
-                        <h4 className="composer-title">{myReview ? 'Edit your review' : 'Leave a review'}</h4>
-                        <label className="tiny">Rating</label>
-                        <StarPicker value={rating} onChange={setRating} />
+            {/* Masonry wall using CSS columns; composer is a card in the wall */}
+            <div className="reviews-wall">
+                {/* Composer/Login card */}
+                <article className="review-card card composer-card">
+                    {!signedIn ? (
+                        <div>
+                            <h4 className="composer-title">Leave a review</h4>
+                            <p className="small muted" style={{ marginTop: 0 }}>
+                                Sign in to post a review (customers only).
+                            </p>
+                            <a className="cta" href="/account">Sign In / Create Account</a>
+                        </div>
+                    ) : (
+                        <div>
+                            <h4 className="composer-title">{myReview ? 'Edit your review' : 'Leave a review'}</h4>
+                            <label className="tiny">Rating</label>
+                            <StarPicker value={rating} onChange={setRating} />
+                            <label className="tiny" style={{ marginTop: 8 }}>Your review</label>
+                            <textarea
+                                value={body}
+                                onChange={(e) => setBody(e.target.value)}
+                                placeholder="How did we do?"
+                                rows={4}
+                            />
+                            <label className="tiny" style={{ marginTop: 6 }}>Display name (optional)</label>
+                            <input
+                                value={displayName}
+                                onChange={(e) => setDisplayName(e.target.value)}
+                                placeholder="e.g., J. Smith, Surprise"
+                            />
+                            <button className="cta" type="button" onClick={saveReview} style={{ marginTop: 10 }}>
+                                {myReview ? 'Update Review' : 'Post Review'}
+                            </button>
+                            {note && <p className="tiny" style={{ marginTop: 6, color: 'var(--sun)' }}>{note}</p>}
+                        </div>
+                    )}
+                </article>
 
-                        <label className="tiny" style={{ marginTop: 8 }}>Your review</label>
-                        <textarea
-                            value={body}
-                            onChange={(e) => setBody(e.target.value)}
-                            placeholder="How did we do?"
-                            rows={4}
-                        />
-
-                        <label className="tiny" style={{ marginTop: 6 }}>Display name (optional)</label>
-                        <input
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            placeholder="e.g., J. Smith, Surprise"
-                        />
-
-                        <button className="cta" type="button" onClick={saveReview} style={{ marginTop: 10 }}>
-                            {myReview ? 'Update Review' : 'Post Review'}
-                        </button>
-
-                        {note && <p className="tiny" style={{ marginTop: 6, color: 'var(--sun)' }}>{note}</p>}
-                    </div>
-                )}
-            </section>
-
-            {/* Auto-sizing grid (cards size to content) */}
-            <div className="reviews-grid">
+                {/* Review cards */}
                 {reviews.map(r => (
                     <article key={r.id} className="review-card card">
                         <div className="review-card-stars" aria-hidden="true">
@@ -205,13 +213,10 @@ export default function Reviews() {
                         </div>
                         <p className="review-body">{r.body}</p>
                         <div className="review-meta tiny muted">
-                            {r.display_name ? r.display_name : 'Verified customer'} • {new Date(r.created_at).toLocaleDateString()}
+                            {r.display_name ? r.display_name : 'Verified customer'} • {fmtDate(r.created_at)}
                         </div>
                     </article>
                 ))}
-                {!reviews.length && (
-                    <div className="small muted" style={{ padding: 12 }}>No reviews yet.</div>
-                )}
             </div>
 
             {hasMore && (

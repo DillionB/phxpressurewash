@@ -214,3 +214,129 @@
         padding: 12px;
     }
 }
+/* Wrap stays in normal document flow – won’t overlap footer */
+.reviews-wall-wrap {
+    display: grid;
+    gap: 14px;
+}
+
+/* Header bar */
+.reviews-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+}
+
+    .reviews-bar .avg-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+.stars {
+    display: inline-flex;
+    gap: 2px;
+}
+
+    .stars .star {
+        font-size: 18px;
+        line-height: 1;
+        opacity: .5;
+        color: var(--ink);
+    }
+
+        .stars .star.on {
+            opacity: 1;
+            color: var(--sun);
+        }
+
+    .stars.readonly .star {
+        cursor: default;
+    }
+
+/* Masonry wall using CSS columns (widely supported) */
+.reviews-wall {
+    column-gap: 12px;
+    column-count: 1;
+}
+
+@media (min-width: 560px) {
+    .reviews-wall {
+        column-count: 2;
+    }
+}
+
+@media (min-width: 900px) {
+    .reviews-wall {
+        column-count: 3;
+    }
+}
+
+@media (min-width: 1200px) {
+    .reviews-wall {
+        column-count: 4;
+    }
+}
+
+/* Cards size to content; avoid column breaks inside a card */
+.review-card {
+    break-inside: avoid;
+    display: block;
+    margin: 0 0 12px;
+    padding: 12px;
+}
+
+    /* “Reasonable size” guard: very long reviews scroll inside their card */
+    .review-card .review-body {
+        margin: 6px 0 0;
+        white-space: pre-wrap;
+        max-height: 22rem; /* cap huge essays */
+        overflow: auto; /* scroll inside the card if too long */
+    }
+
+    .review-card .review-card-stars {
+        color: var(--ink);
+        opacity: .5;
+    }
+
+    .review-card .star.on {
+        color: var(--sun);
+        opacity: 1;
+    }
+
+.review-meta {
+    margin-top: 8px;
+}
+
+/* Composer looks like a card in the wall */
+.composer-card .composer-title {
+    margin: 0 0 6px;
+}
+
+.composer-card textarea {
+    width: 100%;
+}
+
+.composer-card input {
+    width: 100%;
+}
+
+/* Load more */
+.load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 0;
+}
+
+/* Star picker interactivity */
+.stars .star {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: transform .08s ease, opacity .12s ease, color .12s ease;
+}
+
+    .stars .star:hover {
+        transform: scale(1.08);
+    }
