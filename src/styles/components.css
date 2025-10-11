@@ -1995,3 +1995,53 @@ footer {
     position: sticky;
     top: 16px;
 }
+/* Reviews */
+.reviews-board {
+    max-height: 360px;
+    overflow: auto;
+}
+
+.review-line {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px dashed var(--sand, #eee);
+}
+
+    .review-line:last-child {
+        border-bottom: 0;
+    }
+
+.review-stars .star,
+.stars .star {
+    font-size: 18px;
+    line-height: 1;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: var(--ink, #333);
+    opacity: .5;
+    transition: transform .08s ease, opacity .12s ease;
+}
+
+    .stars .star.on,
+    .review-stars .star.on {
+        opacity: 1;
+        color: var(--sun, #ff9500);
+    }
+
+    .stars .star:hover {
+        transform: scale(1.08);
+    }
+
+/* readonly stars override */
+.stars.readonly .star {
+    cursor: default;
+}
+
+/* editor layout */
+.stars {
+    display: inline-flex;
+    gap: 2px;
+}
