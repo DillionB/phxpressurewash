@@ -37,23 +37,52 @@ export default function Reviews() {
     const [hasMore, setHasMore] = useState(true)
     const signedIn = !!session?.user
     const wallTopRef = useRef(null)
+    const [authReady, setAuthReady] = useState(false);
+    const [roleReady, setRoleReady] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false); // keep your existing one or replace
 
+    const resolveIsAdmin = async (sess) => {
+        if (!sess?.user?.id) { setIsAdmin(false); return; }
+        const emailIsAdmin =
+            (sess.user.email || '').toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL || 'admin@phxpressurewash.com').toLowerCase();
+        try {
+            const { data } = await supabase
+                .from('profiles')
+                .select('is_admin')
+                .eq('id', sess.user.id)
+                .maybeSingle();
+            setIsAdmin(Boolean(data?.is_admin) || emailIsAdmin);
+        } catch {
+            setIsAdmin(emailIsAdmin);
+        }
+    };
     useEffect(() => { loadPage(true) }, [isAdmin, session?.user?.id]);
 
     // Auth bootstrap + refresh wall on changes
     useEffect(() => {
-        const sync = async () => {
-            const { data } = await supabase.auth.getSession()
-            setSession(data.session || null)
-        }
-        sync()
-        const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
-            setSession(s)
-            // reset admin immediately on sign-out to prevent admin view leftovers
-            if (!s?.user) setIsAdmin(false)
-        })
-        return () => sub?.subscription?.unsubscribe?.()
-    }, [])
+        let unsub;
+        (async () => {
+            const { data } = await supabase.auth.getSession();
+            const sess = data?.session || null;
+            setSession(sess);
+            setAuthReady(true);
+            await resolveIsAdmin(sess);
+            setRoleReady(true);               // role resolved
+        })();
+
+        const sub = supabase.auth.onAuthStateChange(async (_evt, s) => {
+            setSession(s);
+            setRoleReady(false);              // pause rendering while role flips
+            setIsAdmin(false);
+            setReviews([]);                   // CLEAR grid immediately -> no flash
+            setHasMore(true);
+            await resolveIsAdmin(s);
+            setRoleReady(true);
+        });
+        unsub = sub?.data?.subscription;
+
+        return () => unsub?.unsubscribe?.();
+    }, []);
 
     // Determine admin (secure via profiles.is_admin; UI fallback via email)
     useEffect(() => {
@@ -96,33 +125,41 @@ export default function Reviews() {
     }, [signedIn, session?.user?.id])
 
     // Fetch a page (admins see all; non-admins: hidden=false)
-    const loadPage = async (reset = false) => {
-        const from = reset ? 0 : page * pageSize
-        const to = from + pageSize - 1
+    const loadPage = async (reset = false, includeHidden = false) => {
+        const from = reset ? 0 : page * pageSize;
+        const to = from + pageSize - 1;
 
         let query = supabase
             .from('reviews')
             .select('id, rating, body, display_name, created_at, hidden')
             .order('created_at', { ascending: false })
-            .range(from, to)
+            .range(from, to);
 
-        if (!isAdmin) query = query.eq('hidden', false)
+        if (!includeHidden) query = query.eq('hidden', false);
 
-        const { data, error } = await query
-        if (error) { setNote('Could not load reviews.'); return }
+        const { data, error } = await query;
+        if (error) { setNote('Could not load reviews.'); return; }
+
         if (reset) {
-            setReviews(data || [])
-            setPage(1)
-            setHasMore((data || []).length === pageSize)
+            setReviews(data || []);
+            setPage(1);
+            setHasMore((data || []).length === pageSize);
         } else {
-            setReviews(prev => [...prev, ...(data || [])])
-            setPage(p => p + 1)
-            setHasMore((data || []).length === pageSize)
+            setReviews(prev => [...prev, ...(data || [])]);
+            setPage(p => p + 1);
+            setHasMore((data || []).length === pageSize);
         }
-    }
+    };
+
 
     // Initial + whenever admin/auth changes, reload wall fresh
-    useEffect(() => { loadPage(true) }, [isAdmin, session?.user?.id])
+    useEffect(() => {
+        if (!authReady || !roleReady) return;     // wait until role is known
+        setReviews([]);                           // ensure no stale grid
+        setHasMore(true);
+        loadPage(true, isAdmin);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authReady, roleReady, isAdmin]);
 
     // Only customers can review
     const userCanReview = async () => {
@@ -168,26 +205,15 @@ export default function Reviews() {
 
     const toggleHidden = async (rev) => {
         if (!isAdmin) return;
-
         const nextHidden = !rev.hidden;
-
-        // Optimistic update
-        setReviews(prev => prev.map(r => r.id === rev.id ? ({ ...r, hidden: nextHidden }) : r));
-
-        const { error } = await supabase
-            .from('reviews')
-            .update({ hidden: nextHidden })
-            .eq('id', rev.id);
-
+        setReviews(prev => prev.map(r => r.id === rev.id ? { ...r, hidden: nextHidden } : r));
+        const { error } = await supabase.from('reviews').update({ hidden: nextHidden }).eq('id', rev.id);
         if (error) {
-            // Revert and surface why (this will expose RLS errors if admin flag isn't set)
-            setReviews(prev => prev.map(r => r.id === rev.id ? ({ ...r, hidden: rev.hidden }) : r));
+            setReviews(prev => prev.map(r => r.id === rev.id ? { ...r, hidden: rev.hidden } : r));
             setNote(error.message || 'Failed to update review.');
             return;
         }
-
-        // Force refresh from DB so hidden state persists across tab changes/sign-out
-        await loadPage(true);
+        await loadPage(true, isAdmin); // ensure persistence reflects current role
     };
 
 
@@ -223,7 +249,7 @@ export default function Reviews() {
                 </div>
             </div>
 
-            <div className="reviews-wall">
+            <div className="reviews-wall" key={isAdmin ? 'admin' : 'user'}>
                 {reviews.map(r => (
                     <article key={r.id} className={`review-card card ${r.hidden ? 'is-hidden' : ''}`}>
                         <div className="review-card-top">
@@ -258,7 +284,9 @@ export default function Reviews() {
 
             {hasMore && (
                 <div className="load-more-wrap">
-                    <button className="mini-btn" onClick={() => loadPage(false)}>Load more</button>
+                    <button className="mini-btn" onClick={() => loadPage(false, isAdmin)}>
+                        Load more
+                    </button>
                 </div>
             )}
 
