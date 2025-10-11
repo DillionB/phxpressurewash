@@ -3,80 +3,66 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useCart } from '../state/CartContext'
 import { supabase } from '../lib/supabase'
 import { geocodeAddress, distanceMiles } from '../utils/geocode.js'
-import CheckoutButton from './CheckoutButton.jsx'
 import emailjs from '@emailjs/browser'
 
 // Same origin + radius as Hero
 const ORIGIN_ADDRESS = '25297 N 163rd Dr, Surprise, AZ'
 const RADIUS_MILES = 15
 
-// EmailJS (already set in Netlify env for the site)
+// EmailJS env
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
-const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+const TEMPLATE_ID_FALLBACK = import.meta.env.VITE_EMAILJS_TEMPLATE_ID         // (existing)
+const TEMPLATE_ID_CART = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_CART     // (NEW, preferred)
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 
 export default function CartSummary() {
-    const { items, subtotal, removeItem /* keep clearCart if you want a Clear action */ } = useCart()
+    const { items, subtotal, removeItem } = useCart()
 
-    // UI & flow state
+    // UI & flow
     const [note, setNote] = useState('')
-    const [sending, setSending] = useState(false)
+    const [busy, setBusy] = useState(false)
 
-    // Address/contact capture state
+    // Address / contact
     const [showAddr, setShowAddr] = useState(false)
     const [outOfRange, setOutOfRange] = useState(false)
     const [miles, setMiles] = useState(null)
-
     const [addr, setAddr] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        city: '',
-        state: '',
-        zip: '',
+        name: '', email: '', phone: '',
+        address: '', city: '', state: '', zip: '',
     })
 
-    // init EmailJS (safe to call multiple times)
     useEffect(() => { if (PUBLIC_KEY) emailjs.init(PUBLIC_KEY) }, [])
 
-    const fmtUSD = (n) => (Number(n || 0)).toLocaleString(undefined, { style: 'currency', currency: 'USD' })
+    const fmtUSD = (n) =>
+        (Number(n || 0)).toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 
-    // Build a clean, stripe-ready list (unit prices in cents, qty)
-    const normalized = useMemo(() => {
-        return (items || []).map(l => {
-            const qty = Math.max(1, Number(l.qty || 1))
-            const total = Number(l.subtotal || 0) // builders store per-line total here
-            const unit = total / qty
-            return {
-                title: l.title || 'Service',
-                detail: l.detail || '',
-                price_cents: Math.round(unit * 100),
-                qty
-            }
-        })
-    }, [items])
+    // Normalize cart for Stripe
+    const normalized = useMemo(() => (items || []).map(l => {
+        const qty = Math.max(1, Number(l.qty || 1))
+        const total = Number(l.subtotal || 0)
+        const unit = total / qty
+        return { title: l.title || 'Service', detail: l.detail || '', price_cents: Math.round(unit * 100), qty }
+    }), [items])
 
     const billable = useMemo(
         () => normalized.filter(x => Number.isFinite(x.price_cents) && x.price_cents > 0 && x.qty > 0),
         [normalized]
     )
 
-    // Try to hydrate address/contact from Supabase profile (if signed in)
+    const addressString = (o = addr) =>
+        [o.address, o.city, o.state, o.zip].filter(Boolean).join(', ')
+
+    const onAddrChange = (e) => setAddr(a => ({ ...a, [e.target.name]: e.target.value }))
+
     const tryPrefillFromProfile = async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user?.id) return false
-
-            // Pull profile fields we’ve been saving
             const { data, error } = await supabase
                 .from('profiles')
                 .select('full_name, phone, address, city, state, zip')
-                .eq('id', user.id)
-                .single()
-
+                .eq('id', user.id).single()
             if (error) return false
-
             setAddr(a => ({
                 ...a,
                 name: a.name || data?.full_name || '',
@@ -85,62 +71,62 @@ export default function CartSummary() {
                 address: a.address || data?.address || '',
                 city: a.city || data?.city || '',
                 state: a.state || data?.state || '',
-                zip: a.zip || data?.zip || ''
+                zip: a.zip || data?.zip || '',
             }))
             return true
-        } catch {
-            return false
-        }
+        } catch { return false }
     }
-
-    const addressString = (o = addr) =>
-        [o.address, o.city, o.state, o.zip].filter(Boolean).join(', ')
 
     const geocodeOrigin = async () => {
         try {
             const o = await geocodeAddress(ORIGIN_ADDRESS)
             return { lat: o.lat, lng: o.lng }
         } catch {
-            // Fallback to Surprise, AZ approximate center
-            return { lat: 33.6292, lng: -112.3679 }
+            return { lat: 33.6292, lng: -112.3679 } // Surprise fallback
         }
     }
 
-    const startCheckout = async () => {
+    // ---- MAIN CTA click handler (single button drives everything) ----
+    const onPrimary = async () => {
         setNote('')
 
         if (!items || items.length === 0) {
             setNote('Your cart is empty.')
             return
         }
-        if (billable.length === 0) {
+        if (!billable.length) {
             setNote('All items are $0 — add a priced service first.')
             return
         }
 
-        // 1) Prefill (if possible)
-        const prefilled = await tryPrefillFromProfile()
+        // If the mini form is open…
+        if (showAddr) {
+            // Out of range? -> Send email
+            if (outOfRange) return sendOutOfAreaEmail()
+            // Otherwise -> check radius and proceed accordingly
+            return validateRadiusAndContinue()
+        }
 
-        // Do we already have enough address to test radius?
+        // Otherwise try to prefill and decide whether to open address form
+        const prefilled = await tryPrefillFromProfile()
         const haveAddr =
-            !!(addressString().trim()) &&
+            !!addressString().trim() &&
             (!!addr.name || prefilled) &&
             (!!addr.email || prefilled)
 
         if (!haveAddr) {
-            // Show compact address/contact capture
             setShowAddr(true)
             setOutOfRange(false)
             setNote('Enter your service address to continue.')
             return
         }
 
-        // else: we already have an address → validate radius
+        // Already have address → check radius
         await validateRadiusAndContinue()
     }
 
     const validateRadiusAndContinue = async () => {
-        setSending(true); setNote('Checking service area…')
+        setBusy(true); setNote('Checking service area…')
         try {
             const origin = await geocodeOrigin()
             const g = await geocodeAddress(addressString())
@@ -148,30 +134,27 @@ export default function CartSummary() {
             setMiles(d)
 
             if (d <= RADIUS_MILES) {
-                // In range → send to Stripe
                 await launchStripeCheckout()
             } else {
-                // Out of range → ask to send an email with cart + contact
                 setOutOfRange(true)
                 setNote(`You're ~${d.toFixed(1)} miles away — outside our ${RADIUS_MILES}-mile radius. Send a quick quote request instead.`)
             }
         } catch (e) {
-            console.error('Geocode/radius error:', e)
-            setNote('Could not verify your address. Please double-check it.')
+            console.error('Geocode error:', e)
+            setNote('Could not verify your address. Please check it.')
         } finally {
-            setSending(false)
+            setBusy(false)
         }
     }
 
     const launchStripeCheckout = async () => {
         setNote('Starting checkout…')
         try {
-            // include auth for function to attach user_id/email if available
             let accessToken = null
             try {
                 const { data } = await supabase.auth.getSession()
                 accessToken = data?.session?.access_token || null
-            } catch {/* ignore */ }
+            } catch { }
 
             const resp = await fetch('/.netlify/functions/stripe-create-checkout-session', {
                 method: 'POST',
@@ -190,10 +173,7 @@ export default function CartSummary() {
             }
 
             const { url } = await resp.json()
-            if (!url) {
-                setNote('No checkout URL returned.')
-                return
-            }
+            if (!url) { setNote('No checkout URL returned.'); return }
             window.location = url
         } catch (e) {
             console.error('Checkout error:', e)
@@ -201,10 +181,11 @@ export default function CartSummary() {
         }
     }
 
-    // Send out-of-area email with cart + contact + address
+    // ---- Email cart summary when out of range ----
     const sendOutOfAreaEmail = async () => {
-        if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
-            setNote('Email not configured. Add EmailJS keys to .env.')
+        const templateToUse = TEMPLATE_ID_CART || TEMPLATE_ID_FALLBACK
+        if (!SERVICE_ID || !templateToUse || !PUBLIC_KEY) {
+            setNote('Email not configured. Add EmailJS keys/template to env.')
             return
         }
         if (!addr.name || !addr.phone || !addr.email || !addressString()) {
@@ -212,7 +193,7 @@ export default function CartSummary() {
             return
         }
 
-        setSending(true); setNote('Sending quote request…')
+        setBusy(true); setNote('Sending quote request…')
         try {
             const cartLines = (items || []).map(l => {
                 const qty = Math.max(1, Number(l.qty || 1))
@@ -221,24 +202,25 @@ export default function CartSummary() {
             }).join('\n')
 
             const params = {
+                // contact
                 from_name: addr.name,
                 reply_to: addr.email,
                 user_email: addr.email,
                 customer_phone: addr.phone,
-
+                // address
                 service_address: addressString(),
                 address_line: addr.address,
                 address_city: addr.city,
                 address_state: addr.state,
                 address_zip: addr.zip,
-
+                // cart
                 cart_summary: cartLines,
                 cart_subtotal: fmtUSD(subtotal),
                 distance_miles: miles != null ? miles.toFixed(1) : '',
                 out_of_area_flag: 'true'
             }
 
-            await emailjs.send(SERVICE_ID, TEMPLATE_ID, params, PUBLIC_KEY)
+            await emailjs.send(SERVICE_ID, templateToUse, params, PUBLIC_KEY)
             setNote('✅ Thanks! We received your request — we’ll follow up shortly.')
             setOutOfRange(false)
             setShowAddr(false)
@@ -246,11 +228,22 @@ export default function CartSummary() {
             const msg = err?.text || err?.message || 'Unknown error'
             setNote(`⚠️ Send failed: ${msg}`)
         } finally {
-            setSending(false)
+            setBusy(false)
         }
     }
 
-    const onAddrChange = (e) => setAddr(a => ({ ...a, [e.target.name]: e.target.value }))
+    // ---- Primary CTA label (one button, changing copy) ----
+    const primaryLabel = (() => {
+        if (busy) return 'Working…'
+        if (!items?.length) return 'Cart is empty'
+        if (!billable.length) return 'Add a priced service'
+        if (!showAddr) return 'Proceed to Secure Checkout'
+        if (outOfRange) return 'Send Quote Request'
+        return 'Check Address & Continue'
+    })()
+
+    const primaryDisabled =
+        busy || !items?.length || !billable.length
 
     return (
         <aside className="cart card cart-compact" aria-label="Cart">
@@ -298,22 +291,21 @@ export default function CartSummary() {
                 </div>
             )}
 
-            {/* Subtotal + primary action */}
             <div className="cart-footer-row" aria-live="polite">
                 <span>Subtotal</span>
                 <b>{fmtUSD(subtotal)}</b>
             </div>
 
-            {/* Primary CTA: either goes straight to Stripe or opens address capture */}
+            {/* Single CTA drives the whole flow */}
             <button
                 className="cta cart-checkout-btn"
-                onClick={startCheckout}
-                disabled={sending || items.length === 0}
+                onClick={onPrimary}
+                disabled={primaryDisabled}
             >
-                {sending ? 'Working…' : 'Proceed to Secure Checkout'}
+                {primaryLabel}
             </button>
 
-            {/* Address/contact capture (inline, compact) */}
+            {/* Inline address/contact form appears only when needed */}
             {showAddr && (
                 <div className="cart-inline-form" role="region" aria-label="Service address">
                     <div className="small" style={{ marginBottom: 8 }}>
@@ -350,18 +342,13 @@ export default function CartSummary() {
                             <input name="zip" value={addr.zip} onChange={onAddrChange} />
                         </div>
                     </div>
-
-                    {!outOfRange ? (
-                        <button className="mini-btn" type="button" onClick={validateRadiusAndContinue} disabled={sending}>
-                            {sending ? 'Checking…' : 'Check Address & Continue'}
-                        </button>
-                    ) : (
-                        <button className="mini-btn" type="button" onClick={sendOutOfAreaEmail} disabled={sending}>
-                            {sending ? 'Sending…' : 'Send Quote Request'}
-                        </button>
-                    )}
                 </div>
             )}
+
+            <p className="tiny muted cart-note" style={{ marginTop: 8 }}>
+                Totals are estimates. Final pricing confirmed after site assessment.
+            </p>
+
             {note && (
                 <p className="small" style={{ marginTop: 6, color: '#ffbda8' }}>
                     {note}
