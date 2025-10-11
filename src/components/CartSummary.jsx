@@ -65,13 +65,6 @@ export default function CartSummary() {
                     ))}
                 </div>
             )}
-
-            {/* Sticky-ish footer */}
-            <div className="cart-footer-row" aria-live="polite">
-                <span>Subtotal</span>
-                <b>{fmt(subtotal)}</b>
-            </div>
-
             <CheckoutButton className="cta cart-checkout-btn" />
 
             <p className="tiny muted cart-note">
