@@ -12,7 +12,7 @@ export default function Commercial() {
 
     // Full competitor list with emojis (buttons)
     const serviceOptions = useMemo(() => [
-        { id: 'power', label: '⚡ Power Washing' },
+        { id: 'power', label: '💧 Pressure Washing' },
         { id: 'building', label: '🏢 Building Washing' },
         { id: 'windows', label: '🪟 Window Washing' },
         { id: 'sidewalk', label: '🚶 Sidewalk Cleaning' },
