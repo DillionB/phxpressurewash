@@ -52,7 +52,7 @@ export default function Reviews() {
 
     // Load user's existing review into composer
     useEffect(() => {
-        if (!signedIn) { setMyReview(null); return }
+        if (!signedIn) { setMyReview(null); setBody(''); setDisplayName(''); setRating(5); return }
         let mounted = true
             ; (async () => {
                 const { data, error } = await supabase
@@ -91,9 +91,9 @@ export default function Reviews() {
             setHasMore((data || []).length === pageSize)
         }
     }
-    useEffect(() => { loadPage(true) }, []) // initial
+    useEffect(() => { loadPage(true) }, [])
 
-    // Client-side “paid order” check (RLS also enforces on server)
+    // Paid order check
     const checkPaid = async () => {
         const { data, error } = await supabase
             .from('orders')
@@ -116,8 +116,7 @@ export default function Reviews() {
 
         const row = {
             user_id: session.user.id,
-            rating,
-            body,
+            rating, body,
             display_name: displayName || null
         }
 
@@ -138,8 +137,8 @@ export default function Reviews() {
     }, [reviews])
 
     return (
-        <div className="reviews-layout">
-            {/* Grid header bar */}
+        <div className="reviews-page-wrap">
+            {/* Top bar */}
             <div className="reviews-bar card">
                 <div>
                     <div className="tiny muted">Average rating</div>
@@ -155,7 +154,47 @@ export default function Reviews() {
                 <div className="tiny muted">{reviews.length} review{reviews.length === 1 ? '' : 's'}</div>
             </div>
 
-            {/* Masonry-ish responsive grid */}
+            {/* Centered composer/login (in-flow, not overlapping footer) */}
+            <section className="composer-center card">
+                {!signedIn ? (
+                    <div className="composer-inner">
+                        <h4 className="composer-title">Leave a review</h4>
+                        <p className="small muted" style={{ marginTop: 0 }}>
+                            Sign in to post a review (customers only).
+                        </p>
+                        <a className="cta" href="/account">Sign In / Create Account</a>
+                    </div>
+                ) : (
+                    <div className="composer-inner">
+                        <h4 className="composer-title">{myReview ? 'Edit your review' : 'Leave a review'}</h4>
+                        <label className="tiny">Rating</label>
+                        <StarPicker value={rating} onChange={setRating} />
+
+                        <label className="tiny" style={{ marginTop: 8 }}>Your review</label>
+                        <textarea
+                            value={body}
+                            onChange={(e) => setBody(e.target.value)}
+                            placeholder="How did we do?"
+                            rows={4}
+                        />
+
+                        <label className="tiny" style={{ marginTop: 6 }}>Display name (optional)</label>
+                        <input
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="e.g., J. Smith, Surprise"
+                        />
+
+                        <button className="cta" type="button" onClick={saveReview} style={{ marginTop: 10 }}>
+                            {myReview ? 'Update Review' : 'Post Review'}
+                        </button>
+
+                        {note && <p className="tiny" style={{ marginTop: 6, color: 'var(--sun)' }}>{note}</p>}
+                    </div>
+                )}
+            </section>
+
+            {/* Auto-sizing grid (cards size to content) */}
             <div className="reviews-grid">
                 {reviews.map(r => (
                     <article key={r.id} className="review-card card">
@@ -180,47 +219,6 @@ export default function Reviews() {
                     <button className="mini-btn" onClick={() => loadPage(false)}>Load more</button>
                 </div>
             )}
-
-            {/* Docked composer / login */}
-            <aside className="review-composer card">
-                {!signedIn ? (
-                    <div>
-                        <h4 className="composer-title">Leave a review</h4>
-                        <p className="small muted" style={{ marginTop: 0 }}>
-                            Sign in to post a review (customers only).
-                        </p>
-                        <a className="cta" href="/account">Sign In / Create Account</a>
-                    </div>
-                ) : (
-                    <div>
-                        <h4 className="composer-title">{myReview ? 'Edit your review' : 'Leave a review'}</h4>
-                        <label className="tiny">Rating</label>
-                        <StarPicker value={rating} onChange={setRating} />
-
-                        <label className="tiny" style={{ marginTop: 8 }}>Your review</label>
-                        <textarea
-                            value={body}
-                            onChange={(e) => setBody(e.target.value)}
-                            placeholder="How did we do?"
-                            rows={4}
-                            className="composer-textarea"
-                        />
-
-                        <label className="tiny" style={{ marginTop: 6 }}>Display name (optional)</label>
-                        <input
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            placeholder="e.g., J. Smith, Surprise"
-                        />
-
-                        <button className="cta" type="button" onClick={saveReview} style={{ marginTop: 10 }}>
-                            {myReview ? 'Update Review' : 'Post Review'}
-                        </button>
-
-                        {note && <p className="tiny" style={{ marginTop: 6, color: 'var(--sun)' }}>{note}</p>}
-                    </div>
-                )}
-            </aside>
         </div>
     )
 }
