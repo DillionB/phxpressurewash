@@ -130,28 +130,30 @@ const Ico = {
 
 // --- Catalog with reasonable “per-unit wash” prices ---
 const EQUIPMENT = [
-    { id: 'excavator', label: 'Excavator', price: 180, Icon: Ico.Excavator },
-    { id: 'skid', label: 'Skid Steer', price: 95, Icon: Ico.SkidSteer },
-    { id: 'bulldozer', label: 'Bulldozer', price: 220, Icon: Ico.Bulldozer },
-    { id: 'dump', label: 'Dump Truck', price: 140, Icon: Ico.DumpTruck },
-    { id: 'forklift', label: 'Forklift', price: 85, Icon: Ico.Forklift },
-    { id: 'scissor', label: 'Scissor Lift', price: 90, Icon: Ico.ScissorLift },
-    { id: 'boom', label: 'Boom Lift', price: 130, Icon: Ico.BoomLift },
-    { id: 'watertruck', label: 'Water Truck', price: 160, Icon: Ico.WaterTruck },
-    { id: 'sweeper', label: 'Street Sweeper', price: 175, Icon: Ico.Sweeper },
+    { id: 'excavator', label: 'Excavator', price: 225, Icon: Ico.Excavator },
+    { id: 'skid', label: 'Skid Steer', price: 125, Icon: Ico.SkidSteer },
+    { id: 'bulldozer', label: 'Bulldozer', price: 275, Icon: Ico.Bulldozer },
+    { id: 'dump', label: 'Dump Truck', price: 200, Icon: Ico.DumpTruck },
+    { id: 'forklift', label: 'Forklift', price: 100, Icon: Ico.Forklift },
+    { id: 'scissor', label: 'Scissor Lift', price: 100, Icon: Ico.ScissorLift },
+    { id: 'boom', label: 'Boom Lift', price: 150, Icon: Ico.BoomLift },
+    { id: 'watertruck', label: 'Water Truck', price: 200, Icon: Ico.WaterTruck },
+    { id: 'sweeper', label: 'Street Sweeper', price: 200, Icon: Ico.Sweeper },
     { id: 'generator', label: 'Tow Generator', price: 75, Icon: Ico.Generator },
-    { id: 'lighttower', label: 'Light Tower', price: 70, Icon: Ico.LightTower },
+    { id: 'lighttower', label: 'Light Tower', price: 75, Icon: Ico.LightTower },
 ]
-
 // Site services with flat pricing
 const SERVICES = [
-    { id: 'concrete', label: 'Concrete Pad / Washout Clean', price: 250 },
-    { id: 'contain', label: 'EPA Containment & Recovery', price: 120 },
-    { id: 'degrease', label: 'Heavy Degreasing / Chem Boost', price: 80 },
-    { id: 'fuelspill', label: 'Fuel / Oil Spill Cleanup', price: 220 },
-    { id: 'trailer', label: 'Site Trailer Exterior Wash', price: 95 },
+    { id: 'concrete', label: 'Concrete Pad / Washout Clean', price: 300 },
+    { id: 'contain', label: 'EPA Containment & Recovery', price: 150 },
+    { id: 'degrease', label: 'Heavy Degreasing / Chem Boost', price: 120 },
+    { id: 'fuelspill', label: 'Fuel / Oil Spill Cleanup', price: 250 },
+    { id: 'trailer', label: 'Site Trailer Exterior Wash', price: 120 },
     { id: 'toilets', label: 'Portable Toilet Exterior Wash', price: 60 },
+    { id: 'oil', label: 'Fluid/Oil Change', price: 90 },
+    { id: 'mechanic', label: 'Mechanical Services', price: null, note: 'Contact for quote' },
 ]
+
 
 export default function Industrial() {
     const { addItem } = useCart()
@@ -202,11 +204,10 @@ export default function Industrial() {
         })
         SERVICES.forEach(s => {
             if (svc.includes(s.id)) {
-                added++
                 addItem({
                     title: `Jobsite — ${s.label}`,
-                    detail: 'Flat service',
-                    subtotal: s.price,
+                    detail: s.price != null ? 'Flat service' : (s.note || 'Contact for quote'),
+                    subtotal: s.price || 0,
                     meta: ['industrial', 'site-service']
                 })
             }
@@ -388,6 +389,7 @@ export default function Industrial() {
                 <div className="addon-chips">
                     {SERVICES.map(s => {
                         const on = svc.includes(s.id)
+                        const priceText = s.price != null ? formatUSD(s.price) : (s.note || 'Contact for quote')
                         return (
                             <button
                                 key={s.id}
@@ -395,9 +397,10 @@ export default function Industrial() {
                                 className={`chip ${on ? 'on' : ''}`}
                                 onClick={() => toggleSvc(s.id)}
                                 aria-pressed={on}
-                                title={`${s.label} — ${formatUSD(s.price)}`}
+                                title={`${s.label} — ${priceText}`}
                             >
-                                {s.label} <span className="tiny muted" style={{ marginLeft: 6 }}>{formatUSD(s.price)}</span>
+                                {s.label}
+                                <span className="tiny muted" style={{ marginLeft: 6 }}>{priceText}</span>
                             </button>
                         )
                     })}
