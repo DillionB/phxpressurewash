@@ -1762,3 +1762,16 @@ footer {
             font-size: 14px;
         }
 }
+/* make ticker cards clickable */
+.ticker-card.as-button {
+    cursor: pointer;
+}
+
+    .ticker-card.as-button:focus {
+        outline: 2px solid var(--sun);
+        outline-offset: 2px;
+    }
+
+    .ticker-card.as-button:hover .ticker-card-inner {
+        transform: translateY(-2px);
+    }

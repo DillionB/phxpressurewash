@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+// src/pages/Residential.jsx
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import DrivewayGarageBuilder from '../components/DrivewayGarageBuilder'
 import HouseExteriorBuilder from '../components/HouseExteriorBuilder'
-import RoofCleaningBuilder from '../components/RoofCleaningBuilder'
+import RoofCleaningBuilder from '../components/RoofCleaningBuilder'      // keep if you use it elsewhere
 import PatioCleaningBuilder from '../components/PatioCleaningBuilder'
-import WindowWashingBuilder from '../components/WindowWashingBuilder'     // NEW
-import SolarPanelBuilder from '../components/SolarPanelBuilder'           // NEW
+import WindowWashingBuilder from '../components/WindowWashingBuilder'
+import SolarPanelBuilder from '../components/SolarPanelBuilder'
 import { useCart } from '../state/CartContext'
 
 function Placeholder({ title, note }) {
@@ -20,21 +22,47 @@ function Placeholder({ title, note }) {
 }
 
 export default function Residential() {
-    const [active, setActive] = useState('driveway')
+    const location = useLocation()
+    const navigate = useNavigate()
+
+    const tabs = useMemo(() => ([
+        ['driveway', 'Driveway / Garage'],
+        ['house', 'House Exterior'],
+        ['patio', 'Patio Cleaning'],
+        ['windows', 'Window Washing'],
+        ['solar', 'Solar Panels'],            // NEW
+    ]), [])
+
+    const getInitial = () => {
+        const param = new URLSearchParams(location.search).get('tab')
+        const t = (param || '').toLowerCase()
+        const keys = tabs.map(([k]) => k)
+        return keys.includes(t) ? t : 'driveway'
+    }
+
+    const [active, setActive] = useState(getInitial())
+
+    // keep state in sync if ?tab= changes
+    useEffect(() => { setActive(getInitial()) }, [location.search])
+
+    const changeTab = (val) => {
+        setActive(val)
+        const sp = new URLSearchParams(location.search)
+        sp.set('tab', val)
+        navigate({ pathname: '/services/res', search: sp.toString() }, { replace: true })
+    }
 
     return (
         <section className="wrap" id="book">
             <h2 className="section-title">Residential Services</h2>
             <div className="subtabs">
-                {[
-                    ['driveway', 'Driveway / Garage'],
-                    ['house', 'House Exterior'],
-                    ['roof', 'Roof Cleaning'],
-                    ['patio', 'Patio Cleaning'],
-                    ['windows', 'Window Washing'],
-                    ['solar', 'Solar Panel Washing'],
-                ].map(([val, label]) => (
-                    <button key={val} className={`tab ${active === val ? 'active' : ''}`} onClick={() => setActive(val)}>
+                {tabs.map(([val, label]) => (
+                    <button
+                        key={val}
+                        className={`tab ${active === val ? 'active' : ''}`}
+                        onClick={() => changeTab(val)}
+                        type="button"
+                    >
                         {label}
                     </button>
                 ))}
@@ -42,10 +70,9 @@ export default function Residential() {
 
             {active === 'driveway' && <DrivewayGarageBuilder />}
             {active === 'house' && <HouseExteriorBuilder />}
-            {active === 'roof' && <RoofCleaningBuilder />}
             {active === 'patio' && <PatioCleaningBuilder />}
-            {active === 'windows' && <WindowWashingBuilder />}   {/* NEW */}
-            {active === 'solar' && <SolarPanelBuilder />}      {/* NEW */}
+            {active === 'windows' && <WindowWashingBuilder />}
+            {active === 'solar' && <SolarPanelBuilder />}
         </section>
     )
 }
