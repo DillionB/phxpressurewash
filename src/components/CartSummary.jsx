@@ -8,28 +8,27 @@ import emailjs from '@emailjs/browser'
 const ORIGIN_ADDRESS = '25297 N 163rd Dr, Surprise, AZ'
 const RADIUS_MILES = 15
 
+// EmailJS env
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
 const TEMPLATE_ID_FALLBACK = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
 const TEMPLATE_ID_CART = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_CART
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 
 export default function CartSummary() {
-    const { items, subtotal, removeItem } = useCart()
+    const { items, subtotal } = useCart()
 
     const [note, setNote] = useState('')
     const [busy, setBusy] = useState(false)
     const [outOfRange, setOutOfRange] = useState(false)
     const [miles, setMiles] = useState(null)
 
-    // Always show the form; prefill if signed in
+    // Always-visible form (replaces cart list)
     const [addr, setAddr] = useState({
         name: '', email: '', phone: '',
         address: '', city: '', state: '', zip: '',
     })
 
-    useEffect(() => { if (PUBLIC_KEY) emailjs.init(PUBLIC_KEY) }, [])
-
-    // Prefill once if signed in
+    // Prefill (no auto-submit) — runs once if signed in
     useEffect(() => {
         (async () => {
             try {
@@ -51,14 +50,16 @@ export default function CartSummary() {
                     state: a.state || data?.state || '',
                     zip: a.zip || data?.zip || '',
                 }))
-            } catch {/* ignore */ }
+            } catch { /* ignore */ }
         })()
     }, [])
+
+    useEffect(() => { if (PUBLIC_KEY) emailjs.init(PUBLIC_KEY) }, [])
 
     const fmtUSD = (n) =>
         (Number(n || 0)).toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 
-    // Normalize for Stripe
+    // Stripe-ready lines (unit prices in cents)
     const normalized = useMemo(() => (items || []).map(l => {
         const qty = Math.max(1, Number(l.qty || 1))
         const total = Number(l.subtotal || 0)
@@ -87,10 +88,9 @@ export default function CartSummary() {
 
     const validateRadiusAndContinue = async () => {
         setNote('')
+
         if (!items?.length) return setNote('Your cart is empty.')
         if (!billable.length) return setNote('All items are $0 — add a priced service first.')
-
-        // Require minimum contact/address
         if (!addr.name || !addr.email || !addr.phone || !addressString()) {
             return setNote('Please complete name, email, phone, and address.')
         }
@@ -216,41 +216,12 @@ export default function CartSummary() {
                 <span className="cart-count" aria-label={`${items.length} items in cart`}>{items.length}</span>
             </div>
 
-            {/* Compact, single-line preview list (keeps space tidy) */}
-            {items.length === 0 ? (
-                <p className="small muted" style={{ margin: 0 }}>No items yet.</p>
-            ) : (
-                <div className="cart-lines cart-lines--condensed" role="list" aria-label="Items">
-                    {items.map((item) => (
-                        <div key={item.id || `${item.title}-${Math.random()}`} className="cart-line cart-line--condensed" role="listitem">
-                            <div className="cart-line-main">
-                                <div className="cart-line-title">{item.title}</div>
-                            </div>
-                            <div className="cart-line-right">
-                                <div className="cart-line-price">{fmtUSD(item.subtotal)}</div>
-                                <button
-                                    className="cart-remove"
-                                    aria-label={`Remove ${item.title}`}
-                                    title="Remove"
-                                    type="button"
-                                    onClick={() => removeItem(item.id)}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
+            {/* No cart list — the form replaces that space */}
             <div className="cart-footer-row" aria-live="polite">
                 <span>Subtotal</span>
                 <b>{fmtUSD(subtotal)}</b>
             </div>
 
-            {/* Address / Contact form ALWAYS visible */}
             <div className="cart-inline-form" role="region" aria-label="Service address" style={{ marginTop: 10 }}>
                 <div className="small" style={{ marginBottom: 8 }}>
                     We’ll check if the address is within our {RADIUS_MILES}-mile service radius before payment.
@@ -287,7 +258,7 @@ export default function CartSummary() {
                     </div>
                 </div>
 
-                {/* Primary CTA under the form */}
+                {/* Primary CTA lives directly under the form */}
                 <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
                     <button
                         type="button"
