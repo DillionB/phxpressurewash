@@ -23,7 +23,7 @@ export default function ShopPage(){
   return (
     <section className="wrap" id="services-shop">
       <h2 className="section-title">Services</h2>
-      <p className="section-sub">
+      <p className="section-sub" style={{ textAlign: 'center' }}>
         Choose a category below, add services to cart, then check out or request a quote.
       </p>
 
@@ -82,11 +82,11 @@ export default function ShopPage(){
 
       </div>
 
-      <div className="shop-layout">
+      <div className="shop-layout" style={{ paddingTop: '-50px' }}>
         <div className="shop-main">
           {current === 'res' && <Residential />}
-          {current === 'com' && <Commercial />}
           {current === 'ind' && <Industrial />}
+          {current === 'com' && <Commercial />}
         </div>
         <div className="shop-side">
           <CartSummary />

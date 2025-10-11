@@ -414,7 +414,7 @@ export default function Industrial() {
                     <button className="cta" type="button" onClick={addSelectedToCart}>Add Selected to Cart</button>
                     <button className="mini-btn" type="button" onClick={() => setMode('quote')}>Request a Quote</button>
                     {PHONE ? (
-                        <a className="mini-btn" href={`tel:${PHONE}`}>Call Now</a>
+                        <a className="mini-btn" href={`tel:${PHONE}`}>Call Now </a>
                     ) : (
                         <button className="mini-btn" type="button" onClick={() => navigate('/contact')}>Call Now</button>
                     )}

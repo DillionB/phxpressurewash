@@ -12,8 +12,8 @@ export default function Shop({ activeTab = 'res', onChangeTab = () => { } }) {
             <Tabs
                 tabs={[
                     { value: 'res', label: 'Residential' },
-                    { value: 'com', label: 'Commercial' },
                     { value: 'ind', label: 'Industrial' },
+                    { value: 'com', label: 'Commercial' },
                 ]}
                 active={activeTab}
                 onChange={onChangeTab}
@@ -21,8 +21,8 @@ export default function Shop({ activeTab = 'res', onChangeTab = () => { } }) {
             <div className="shop-layout">
                 <div className="shop-main">
                     {activeTab === 'res' && <Residential />}
-                    {activeTab === 'com' && <Commercial />}
                     {activeTab === 'ind' && <Industrial />}
+                    {activeTab === 'com' && <Commercial />}
                 </div>
                 <div className="shop-side">
                     <CartSummary />
