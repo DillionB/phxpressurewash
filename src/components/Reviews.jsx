@@ -38,6 +38,8 @@ export default function Reviews() {
     const signedIn = !!session?.user
     const wallTopRef = useRef(null)
 
+    useEffect(() => { loadPage(true) }, [isAdmin, session?.user?.id]);
+
     // Auth bootstrap + refresh wall on changes
     useEffect(() => {
         const sync = async () => {
@@ -165,22 +167,29 @@ export default function Reviews() {
     }
 
     const toggleHidden = async (rev) => {
-        if (!isAdmin) return
-        const nextHidden = !rev.hidden
-        // optimistic UI (admin can see both states)
-        setReviews(prev => prev.map(r => r.id === rev.id ? { ...r, hidden: nextHidden } : r))
+        if (!isAdmin) return;
+
+        const nextHidden = !rev.hidden;
+
+        // Optimistic update
+        setReviews(prev => prev.map(r => r.id === rev.id ? ({ ...r, hidden: nextHidden }) : r));
+
         const { error } = await supabase
             .from('reviews')
             .update({ hidden: nextHidden })
-            .eq('id', rev.id)
+            .eq('id', rev.id);
+
         if (error) {
-            // revert on failure
-            setReviews(prev => prev.map(r => r.id === rev.id ? { ...r, hidden: rev.hidden } : r))
-            setNote(error.message || 'Failed to update review.')
-            return
+            // Revert and surface why (this will expose RLS errors if admin flag isn't set)
+            setReviews(prev => prev.map(r => r.id === rev.id ? ({ ...r, hidden: rev.hidden }) : r));
+            setNote(error.message || 'Failed to update review.');
+            return;
         }
-        // If you immediately sign out after hiding, the reload below plus RLS ensures it stays hidden.
-    }
+
+        // Force refresh from DB so hidden state persists across tab changes/sign-out
+        await loadPage(true);
+    };
+
 
     const visibleForAverage = useMemo(() => reviews.filter(r => !r.hidden), [reviews])
     const avg = useMemo(() => {
