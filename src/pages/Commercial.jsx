@@ -19,10 +19,8 @@ export default function Commercial() {
         { id: 'gum', label: '🍬 Gum Removal' },
         { id: 'graffiti', label: '🎨 Graffiti Removal' },
         { id: 'street', label: '🧹 Street Sweeping' },
-        { id: 'lot', label: '🅿️ Parking Lot Sweeping' },
         { id: 'porter', label: '🧑‍🔧 Day Porter' },
         { id: 'fleet', label: '🚚 Fleet Washing' },
-        { id: 'roof', label: '🏠 Roof Cleaning' },
         { id: 'garages', label: '🅿️ Parking Garages' },
         { id: 'gutter', label: '🪣 Gutter Cleaning' },
         { id: 'dumpster', label: '🗑️ Dumpster Pads' },
@@ -218,18 +216,6 @@ export default function Commercial() {
                     <div className="full">
                         <label htmlFor="email">Email</label>
                         <input id="email" name="email" type="email" autoComplete="email" value={form.email} onChange={onChange} required />
-                    </div>
-
-                    {/* Notes */}
-                    <div className="full">
-                        <label htmlFor="notes">Notes</label>
-                        <textarea
-                            id="notes"
-                            name="notes"
-                            value={form.notes}
-                            onChange={onChange}
-                            placeholder="Surfaces, timing, hazards, water access, other requests."
-                        />
                     </div>
 
                     <div className="builder-footer" style={{ paddingTop: 8 }}>
