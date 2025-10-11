@@ -22,7 +22,6 @@ export default function Commercial() {
         { id: 'lot', label: '🅿️ Parking Lot Sweeping' },
         { id: 'porter', label: '🧑‍🔧 Day Porter' },
         { id: 'fleet', label: '🚚 Fleet Washing' },
-        { id: 'roof', label: '🏠 Roof Cleaning' },
         { id: 'garages', label: '🅿️ Parking Garages' },
         { id: 'gutter', label: '🪣 Gutter Cleaning' },
         { id: 'dumpster', label: '🗑️ Dumpster Pads' },
@@ -119,31 +118,6 @@ export default function Commercial() {
                 One team for storefronts, centers, HOAs & facilities — quick quote, no hassle.
             </p>
 
-            {/* Services chips (compact, fits on one screen) */}
-            <div className="card" style={{ marginBottom: 12 }}>
-                <h3 style={{ margin: '0 0 8px' }}>Select services</h3>
-                <div className="addon-chips" role="list" style={{ marginTop: 6 }}>
-                    {serviceOptions.map(opt => {
-                        const on = selected.includes(opt.id)
-                        return (
-                            <button
-                                key={opt.id}
-                                type="button"
-                                className={`chip ${on ? 'on' : ''}`}
-                                onClick={() => toggle(opt.id)}
-                                aria-pressed={on}
-                                title={opt.label}
-                            >
-                                {opt.label}
-                            </button>
-                        )
-                    })}
-                </div>
-                <p className="tiny muted" style={{ marginTop: 6 }}>
-                    Need something not listed? Add it in notes below.
-                </p>
-            </div>
-
             {/* Single, concise form — two-column grid on desktop, one on mobile */}
             <div className="card scheduler">
                 <h3 style={{ marginTop: 0 }}>Quote details</h3>
@@ -220,16 +194,28 @@ export default function Commercial() {
                         <input id="email" name="email" type="email" autoComplete="email" value={form.email} onChange={onChange} required />
                     </div>
 
-                    {/* Notes */}
-                    <div className="full">
-                        <label htmlFor="notes">Notes</label>
-                        <textarea
-                            id="notes"
-                            name="notes"
-                            value={form.notes}
-                            onChange={onChange}
-                            placeholder="Surfaces, timing, hazards, water access, other requests."
-                        />
+                    <div className="card" style={{ marginBottom: 12 }}>
+                        <h3 style={{ margin: '0 0 8px' }}>Select services</h3>
+                        <div className="addon-chips" role="list" style={{ marginTop: 6 }}>
+                            {serviceOptions.map(opt => {
+                                const on = selected.includes(opt.id)
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        className={`chip ${on ? 'on' : ''}`}
+                                        onClick={() => toggle(opt.id)}
+                                        aria-pressed={on}
+                                        title={opt.label}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                        <p className="tiny muted" style={{ marginTop: 6 }}>
+                            Need something not listed? Give us a call! 
+                        </p>
                     </div>
 
                     <div className="builder-footer" style={{ paddingTop: 8 }}>
