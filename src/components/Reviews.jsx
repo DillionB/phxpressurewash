@@ -31,7 +31,6 @@ export default function Reviews() {
     const [displayName, setDisplayName] = useState('')
     const [note, setNote] = useState('')
 
-    // Wall data
     const [reviews, setReviews] = useState([])
     const [page, setPage] = useState(0)
     const pageSize = 18
@@ -39,15 +38,18 @@ export default function Reviews() {
     const signedIn = !!session?.user
     const wallTopRef = useRef(null)
 
-    // Auth bootstrap
+    // Auth bootstrap + refresh wall on changes
     useEffect(() => {
-        let mounted = true
-            ; (async () => {
-                const { data } = await supabase.auth.getSession()
-                if (!mounted) return
-                setSession(data.session || null)
-            })()
-        const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => setSession(s))
+        const sync = async () => {
+            const { data } = await supabase.auth.getSession()
+            setSession(data.session || null)
+        }
+        sync()
+        const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
+            setSession(s)
+            // reset admin immediately on sign-out to prevent admin view leftovers
+            if (!s?.user) setIsAdmin(false)
+        })
         return () => sub?.subscription?.unsubscribe?.()
     }, [])
 
@@ -55,18 +57,13 @@ export default function Reviews() {
     useEffect(() => {
         const checkAdmin = async () => {
             if (!session?.user?.id) { setIsAdmin(false); return }
-            // quick UI fallback
             const emailIsAdmin = (session.user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()
             try {
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('is_admin, email')
+                    .select('is_admin')
                     .eq('id', session.user.id)
                     .maybeSingle()
-                if (error) {
-                    setIsAdmin(emailIsAdmin) // fallback
-                    return
-                }
                 setIsAdmin(!!data?.is_admin || emailIsAdmin)
             } catch {
                 setIsAdmin(emailIsAdmin)
@@ -96,7 +93,7 @@ export default function Reviews() {
         return () => { mounted = false }
     }, [signedIn, session?.user?.id])
 
-    // Load a page of reviews (admins see all; others only hidden=false via RLS + explicit filter)
+    // Fetch a page (admins see all; non-admins: hidden=false)
     const loadPage = async (reset = false) => {
         const from = reset ? 0 : page * pageSize
         const to = from + pageSize - 1
@@ -107,7 +104,6 @@ export default function Reviews() {
             .order('created_at', { ascending: false })
             .range(from, to)
 
-        // For non-admins, filter hidden=false (RLS enforces this anyway; filter keeps client expectations)
         if (!isAdmin) query = query.eq('hidden', false)
 
         const { data, error } = await query
@@ -122,9 +118,11 @@ export default function Reviews() {
             setHasMore((data || []).length === pageSize)
         }
     }
-    useEffect(() => { loadPage(true) }, [isAdmin]) // reload if admin state changes
 
-    // Verify at least one paid/complete order
+    // Initial + whenever admin/auth changes, reload wall fresh
+    useEffect(() => { loadPage(true) }, [isAdmin, session?.user?.id])
+
+    // Only customers can review
     const userCanReview = async () => {
         if (!signedIn) return false
         const { data, error } = await supabase
@@ -151,7 +149,6 @@ export default function Reviews() {
             rating,
             body,
             display_name: displayName || null
-            // 'hidden' not controllable by users
         }
 
         const { data, error } = myReview
@@ -162,20 +159,15 @@ export default function Reviews() {
 
         setMyReview(data)
         setNote('✅ Review saved!')
-
-        // Optimistic insert/update at top
-        setReviews(prev => {
-            const filtered = prev.filter(r => r.id !== data.id)
-            return [{ ...data, created_at: new Date().toISOString() }, ...filtered]
-        })
+        // Re-fetch first page to ensure RLS-consistent list for current role
+        await loadPage(true)
         wallTopRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
-    // Admin: toggle hidden
     const toggleHidden = async (rev) => {
         if (!isAdmin) return
         const nextHidden = !rev.hidden
-        // optimistic UI
+        // optimistic UI (admin can see both states)
         setReviews(prev => prev.map(r => r.id === rev.id ? { ...r, hidden: nextHidden } : r))
         const { error } = await supabase
             .from('reviews')
@@ -185,20 +177,21 @@ export default function Reviews() {
             // revert on failure
             setReviews(prev => prev.map(r => r.id === rev.id ? { ...r, hidden: rev.hidden } : r))
             setNote(error.message || 'Failed to update review.')
+            return
         }
+        // If you immediately sign out after hiding, the reload below plus RLS ensures it stays hidden.
     }
 
+    const visibleForAverage = useMemo(() => reviews.filter(r => !r.hidden), [reviews])
     const avg = useMemo(() => {
-        const visible = reviews.filter(r => !r.hidden)  // average of visible only
-        if (!visible.length) return null
-        return (visible.reduce((a, r) => a + (r.rating || 0), 0) / visible.length).toFixed(1)
-    }, [reviews])
+        if (!visibleForAverage.length) return null
+        return (visibleForAverage.reduce((a, r) => a + (r.rating || 0), 0) / visibleForAverage.length).toFixed(1)
+    }, [visibleForAverage])
 
     const fmtDate = (d) => new Date(d).toLocaleDateString()
 
     return (
         <div className="reviews-wall-wrap">
-            {/* Header bar */}
             <div className="reviews-bar card" ref={wallTopRef}>
                 <div>
                     <div className="tiny muted">Average rating</div>
@@ -212,7 +205,7 @@ export default function Reviews() {
                     </div>
                 </div>
                 <div className="tiny muted">
-                    {reviews.filter(r => !r.hidden).length} review{reviews.filter(r => !r.hidden).length === 1 ? '' : 's'}
+                    {visibleForAverage.length} review{visibleForAverage.length === 1 ? '' : 's'}
                     {isAdmin && (
                         <span className="tiny" style={{ marginLeft: 8, opacity: .8 }}>
                             • Admin view: {reviews.length} total (incl. hidden)
@@ -221,7 +214,6 @@ export default function Reviews() {
                 </div>
             </div>
 
-            {/* Masonry wall */}
             <div className="reviews-wall">
                 {reviews.map(r => (
                     <article key={r.id} className={`review-card card ${r.hidden ? 'is-hidden' : ''}`}>
@@ -261,14 +253,13 @@ export default function Reviews() {
                 </div>
             )}
 
-            {/* Bottom-centered composer/login */}
             <div className="composer-dock">
                 <article className="card composer-inner">
                     {!signedIn ? (
                         <div>
                             <h4 className="composer-title">Leave a review</h4>
                             <p className="small muted" style={{ marginTop: 0 }}>
-                                Sign in to post a review.
+                                Sign in to post a review (customers only).
                             </p>
                             <a className="cta" href="/account">Sign In / Create Account</a>
                         </div>
