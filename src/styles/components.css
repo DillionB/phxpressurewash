@@ -2045,3 +2045,120 @@ footer {
     display: inline-flex;
     gap: 2px;
 }
+/* Layout shell */
+.reviews-layout {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 12px;
+    min-height: 60vh;
+    padding-bottom: 120px; /* reserve space so grid doesn't hide under composer */
+}
+
+/* Header bar above the grid */
+.reviews-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+}
+
+    .reviews-bar .avg-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+/* Responsive grid of review cards */
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.review-card .review-card-stars .star,
+.review-card .review-meta .star {
+    font-size: 16px;
+}
+
+.review-card .review-card-stars {
+    color: var(--ink);
+    opacity: .5;
+}
+
+.review-card .star.on {
+    color: var(--sun);
+    opacity: 1;
+}
+
+.review-card .review-body {
+    margin: 8px 0 6px;
+}
+
+/* Load more button row */
+.load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 12px;
+}
+
+/* Docked composer (bottom-right) */
+.review-composer {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    z-index: 20;
+    box-shadow: 0 10px 28px rgba(0,0,0,.18);
+    border: 1px solid rgba(0,0,0,.06);
+}
+
+.composer-title {
+    margin: 0 0 8px;
+}
+
+.composer-textarea {
+    resize: vertical;
+    min-height: 96px;
+}
+
+/* Stars (shared) */
+.stars {
+    display: inline-flex;
+    gap: 2px;
+}
+
+    .stars .star {
+        font-size: 18px;
+        line-height: 1;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        color: var(--ink);
+        opacity: .5;
+        transition: transform .08s ease, opacity .12s ease, color .12s ease;
+    }
+
+        .stars .star.on {
+            color: var(--sun);
+            opacity: 1;
+        }
+
+        .stars .star:hover {
+            transform: scale(1.08);
+        }
+
+    .stars.readonly .star {
+        cursor: default;
+    }
+
+/* Mobile: make composer a bottom sheet */
+@media (max-width: 560px) {
+    .review-composer {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+    }
+}

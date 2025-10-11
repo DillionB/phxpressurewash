@@ -13,9 +13,7 @@ function StarPicker({ value, onChange, disabled }) {
                     aria-label={`${n} star${n > 1 ? 's' : ''}`}
                     onClick={() => !disabled && onChange(n)}
                     disabled={disabled}
-                >
-                    ★
-                </button>
+                >★</button>
             ))}
         </div>
     )
@@ -25,22 +23,21 @@ export default function Reviews() {
     const [session, setSession] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    // User’s editable review state
-    const [myReview, setMyReview] = useState(null) // { id, rating, body, display_name }
+    // Composer state (user’s review)
+    const [myReview, setMyReview] = useState(null)
     const [rating, setRating] = useState(5)
     const [body, setBody] = useState('')
     const [displayName, setDisplayName] = useState('')
-
-    // List state
-    const [reviews, setReviews] = useState([])
-    const [page, setPage] = useState(0)
-    const pageSize = 10
-    const [hasMore, setHasMore] = useState(true)
     const [note, setNote] = useState('')
 
+    // Board state
+    const [reviews, setReviews] = useState([])
+    const [page, setPage] = useState(0)
+    const pageSize = 12
+    const [hasMore, setHasMore] = useState(true)
     const signedIn = !!session?.user
 
-    // Load auth session
+    // Auth bootstrap
     useEffect(() => {
         let mounted = true
             ; (async () => {
@@ -50,10 +47,10 @@ export default function Reviews() {
                 setLoading(false)
             })()
         const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => setSession(s))
-        return () => { mounted = false; sub?.subscription?.unsubscribe?.() }
+        return () => sub?.subscription?.unsubscribe?.()
     }, [])
 
-    // Load user's existing review (if signed in)
+    // Load user's existing review into composer
     useEffect(() => {
         if (!signedIn) { setMyReview(null); return }
         let mounted = true
@@ -63,20 +60,18 @@ export default function Reviews() {
                     .select('id, rating, body, display_name')
                     .eq('user_id', session.user.id)
                     .maybeSingle()
-
-                if (mounted && !error) {
-                    setMyReview(data || null)
-                    if (data) {
-                        setRating(data.rating ?? 5)
-                        setBody(data.body ?? '')
-                        setDisplayName(data.display_name ?? '')
-                    }
+                if (!mounted) return
+                if (!error && data) {
+                    setMyReview(data)
+                    setRating(data.rating ?? 5)
+                    setBody(data.body ?? '')
+                    setDisplayName(data.display_name ?? '')
                 }
             })()
         return () => { mounted = false }
     }, [signedIn, session?.user?.id])
 
-    // Load list (paged)
+    // Load grid page
     const loadPage = async (reset = false) => {
         const from = reset ? 0 : page * pageSize
         const to = from + pageSize - 1
@@ -85,27 +80,21 @@ export default function Reviews() {
             .select('id, rating, body, display_name, created_at')
             .order('created_at', { ascending: false })
             .range(from, to)
-
-        if (error) {
-            setNote('Could not load reviews.')
-            return
-        }
+        if (error) { setNote('Could not load reviews.'); return }
         if (reset) {
             setReviews(data || [])
-            setPage(0)
+            setPage(1)
             setHasMore((data || []).length === pageSize)
         } else {
             setReviews(prev => [...prev, ...(data || [])])
-            setHasMore((data || []).length === pageSize)
             setPage(p => p + 1)
+            setHasMore((data || []).length === pageSize)
         }
     }
+    useEffect(() => { loadPage(true) }, []) // initial
 
-    useEffect(() => { loadPage(true) }, []) // first load
-
-    // Check “paid customer” on client before submit (we still enforce in RLS)
+    // Client-side “paid order” check (RLS also enforces on server)
     const checkPaid = async () => {
-        // Adjust if your table/columns differ
         const { data, error } = await supabase
             .from('orders')
             .select('id')
@@ -119,15 +108,11 @@ export default function Reviews() {
     const saveReview = async () => {
         setNote('')
         if (!signedIn) { setNote('Please sign in to leave a review.'); return }
-        if ((body || '').trim().length < 5) { setNote('Please write a few words (5+ characters).'); return }
+        if ((body || '').trim().length < 5) { setNote('Please write at least 5 characters.'); return }
         if (rating < 1 || rating > 5) { setNote('Rating must be 1–5.'); return }
 
-        // Client-side check (server still enforces via RLS)
         const paid = await checkPaid()
-        if (!paid) {
-            setNote('It looks like you haven’t placed an order with us yet. Reviews are limited to customers.')
-            return
-        }
+        if (!paid) { setNote('Reviews are limited to customers who completed an order.'); return }
 
         const row = {
             user_id: session.user.id,
@@ -140,55 +125,75 @@ export default function Reviews() {
             ? await supabase.from('reviews').update(row).eq('id', myReview.id).select().single()
             : await supabase.from('reviews').insert(row).select().single()
 
-        if (error) {
-            console.error(error)
-            setNote(error.message || 'Could not save your review.')
-            return
-        }
+        if (error) { setNote(error.message || 'Could not save your review.'); return }
 
         setMyReview(data)
         setNote('✅ Review saved!')
-        // Refresh the board from the top (so user sees theirs)
         await loadPage(true)
     }
 
     const avg = useMemo(() => {
         if (!reviews.length) return null
-        const sum = reviews.reduce((a, r) => a + (r.rating || 0), 0)
-        return (sum / reviews.length).toFixed(1)
+        return (reviews.reduce((a, r) => a + (r.rating || 0), 0) / reviews.length).toFixed(1)
     }, [reviews])
 
     return (
-        <>
-            <h2 className="section-title">What Clients Say</h2>
-
-            {/* Summary bar */}
-            <div className="card" style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="reviews-layout">
+            {/* Grid header bar */}
+            <div className="reviews-bar card">
                 <div>
                     <div className="tiny muted">Average rating</div>
-                    <div style={{ fontWeight: 700, fontSize: 18 }}>
-                        {avg ? `${avg} / 5` : 'No reviews yet'}
+                    <div className="avg-line">
+                        <strong>{avg ? `${avg} / 5` : 'No reviews yet'}</strong>
+                        <span className="stars readonly" aria-hidden="true">
+                            {[1, 2, 3, 4, 5].map(n =>
+                                <span key={n} className={`star ${avg && n <= Math.round(avg) ? 'on' : ''}`}>★</span>
+                            )}
+                        </span>
                     </div>
                 </div>
-                <div className="stars readonly" aria-hidden="true">
-                    {[1, 2, 3, 4, 5].map(n => (
-                        <span key={n} className={`star ${avg && n <= Math.round(avg) ? 'on' : ''}`}>★</span>
-                    ))}
-                </div>
+                <div className="tiny muted">{reviews.length} review{reviews.length === 1 ? '' : 's'}</div>
             </div>
 
-            {/* Editor or sign-in prompt */}
-            <div className="card" style={{ marginBottom: 16 }}>
+            {/* Masonry-ish responsive grid */}
+            <div className="reviews-grid">
+                {reviews.map(r => (
+                    <article key={r.id} className="review-card card">
+                        <div className="review-card-stars" aria-hidden="true">
+                            {[1, 2, 3, 4, 5].map(n =>
+                                <span key={n} className={`star ${n <= r.rating ? 'on' : ''}`}>★</span>
+                            )}
+                        </div>
+                        <p className="review-body">{r.body}</p>
+                        <div className="review-meta tiny muted">
+                            {r.display_name ? r.display_name : 'Verified customer'} • {new Date(r.created_at).toLocaleDateString()}
+                        </div>
+                    </article>
+                ))}
+                {!reviews.length && (
+                    <div className="small muted" style={{ padding: 12 }}>No reviews yet.</div>
+                )}
+            </div>
+
+            {hasMore && (
+                <div className="load-more-wrap">
+                    <button className="mini-btn" onClick={() => loadPage(false)}>Load more</button>
+                </div>
+            )}
+
+            {/* Docked composer / login */}
+            <aside className="review-composer card">
                 {!signedIn ? (
                     <div>
-                        <p className="small" style={{ marginTop: 0 }}>
-                            Sign in to leave a review (customers only).
+                        <h4 className="composer-title">Leave a review</h4>
+                        <p className="small muted" style={{ marginTop: 0 }}>
+                            Sign in to post a review (customers only).
                         </p>
                         <a className="cta" href="/account">Sign In / Create Account</a>
                     </div>
                 ) : (
                     <div>
-                        <h3 style={{ marginTop: 0 }}>{myReview ? 'Edit your review' : 'Leave a review'}</h3>
+                        <h4 className="composer-title">{myReview ? 'Edit your review' : 'Leave a review'}</h4>
                         <label className="tiny">Rating</label>
                         <StarPicker value={rating} onChange={setRating} />
 
@@ -198,54 +203,24 @@ export default function Reviews() {
                             onChange={(e) => setBody(e.target.value)}
                             placeholder="How did we do?"
                             rows={4}
+                            className="composer-textarea"
                         />
 
-                        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
-                            <div>
-                                <label className="tiny">Display name (optional)</label>
-                                <input
-                                    value={displayName}
-                                    onChange={(e) => setDisplayName(e.target.value)}
-                                    placeholder="e.g., J. Smith, Surprise"
-                                />
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                                <button className="cta" type="button" onClick={saveReview}>Post Review</button>
-                            </div>
-                        </div>
+                        <label className="tiny" style={{ marginTop: 6 }}>Display name (optional)</label>
+                        <input
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="e.g., J. Smith, Surprise"
+                        />
+
+                        <button className="cta" type="button" onClick={saveReview} style={{ marginTop: 10 }}>
+                            {myReview ? 'Update Review' : 'Post Review'}
+                        </button>
 
                         {note && <p className="tiny" style={{ marginTop: 6, color: 'var(--sun)' }}>{note}</p>}
                     </div>
                 )}
-            </div>
-
-            {/* Review board */}
-            <div className="card" style={{ padding: 0 }}>
-                <div className="reviews-board">
-                    {reviews.map(r => (
-                        <article key={r.id} className="review-line">
-                            <div className="review-stars" aria-hidden="true">
-                                {[1, 2, 3, 4, 5].map(n => <span key={n} className={`star ${n <= r.rating ? 'on' : ''}`}>★</span>)}
-                            </div>
-                            <div className="review-body">
-                                <p style={{ margin: 0 }}>{r.body}</p>
-                                <div className="tiny muted" style={{ marginTop: 6 }}>
-                                    {r.display_name ? r.display_name : 'Verified customer'} • {new Date(r.created_at).toLocaleDateString()}
-                                </div>
-                            </div>
-                        </article>
-                    ))}
-                    {!reviews.length && (
-                        <div className="small muted" style={{ padding: 12 }}>No reviews yet.</div>
-                    )}
-                </div>
-
-                {hasMore && (
-                    <div style={{ padding: 12 }}>
-                        <button className="mini-btn" onClick={() => loadPage(false)}>Load more</button>
-                    </div>
-                )}
-            </div>
-        </>
+            </aside>
+        </div>
     )
 }
