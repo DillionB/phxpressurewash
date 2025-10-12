@@ -23,33 +23,70 @@ function StarPicker({ value, onChange, disabled }) {
 }
 
 export default function Reviews() {
-    // --- Auth / role
+    // Auth / role gates
     const [session, setSession] = useState(null)
-    const [isAdmin, setIsAdmin] = useState(false)
     const [authReady, setAuthReady] = useState(false)
     const [roleReady, setRoleReady] = useState(false)
+    const [isAdmin, setIsAdmin] = useState(false)
 
-    // --- Composer
+    // Composer
     const [myReview, setMyReview] = useState(null)
     const [rating, setRating] = useState(5)
     const [body, setBody] = useState('')
     const [displayName, setDisplayName] = useState('')
     const [note, setNote] = useState('')
 
-    // --- Wall
+    // Wall
     const [reviews, setReviews] = useState([])
     const [page, setPage] = useState(0)
     const pageSize = 18
     const [hasMore, setHasMore] = useState(true)
-    const wallTopRef = useRef(null)
 
     const signedIn = !!session?.user
+    const wallTopRef = useRef(null)
 
-    // Resolve admin role: profiles.is_admin OR fallback to email
-    const resolveIsAdmin = async (sess) => {
-        if (!sess?.user?.id) { setIsAdmin(false); return }
-        const emailIsAdmin = (sess.user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()
+    // --- Auth bootstrap (always flip authReady) ---
+    useEffect(() => {
+        let mounted = true
+
+        const init = async () => {
+            try {
+                const { data } = await supabase.auth.getSession()
+                if (!mounted) return
+                setSession(data?.session ?? null)
+            } catch {
+                // ignore
+            } finally {
+                if (mounted) setAuthReady(true)
+            }
+        }
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_evt, s) => {
+            setSession(s)
+            // pause grid while role flips
+            setRoleReady(false)
+            setIsAdmin(false)
+            setReviews([])     // clear grid immediately to avoid role flicker
+            setHasMore(true)
+            await resolveIsAdmin(s)
+        })
+
+        init()
+
+        return () => {
+            mounted = false
+            subscription?.unsubscribe?.()
+        }
+    }, [])
+
+    // --- Resolve admin (profiles.is_admin OR ADMIN_EMAIL) ---
+    const resolveIsAdmin = async (sess = session) => {
         try {
+            const emailIsAdmin = (sess?.user?.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()
+            if (!sess?.user?.id) {
+                setIsAdmin(false)
+                return
+            }
             const { data } = await supabase
                 .from('profiles')
                 .select('is_admin')
@@ -57,56 +94,21 @@ export default function Reviews() {
                 .maybeSingle()
             setIsAdmin(Boolean(data?.is_admin) || emailIsAdmin)
         } catch {
-            setIsAdmin(emailIsAdmin)
+            setIsAdmin(false)
+        } finally {
+            setRoleReady(true)
         }
     }
 
-    // Auth bootstrap: avoid flicker by clearing grid on role flip
+    // Resolve role after initial auth is known
     useEffect(() => {
-        let unsub
-            ; (async () => {
-                const { data } = await supabase.auth.getSession()
-                const sess = data?.session || null
-                setSession(sess)
-                setAuthReady(true)
-                await resolveIsAdmin(sess)
-                setRoleReady(true)
-            })()
-        const sub = supabase.auth.onAuthStateChange(async (_evt, s) => {
-            setSession(s)
-            setRoleReady(false)
-            setIsAdmin(false)
-            setReviews([])   // clear immediately -> prevents flash of wrong role
-            setHasMore(true)
-            await resolveIsAdmin(s)
-            setRoleReady(true)
-        })
-        unsub = sub?.data?.subscription
-        return () => unsub?.unsubscribe?.()
-    }, [])
+        if (!authReady) return
+        setRoleReady(false)
+        resolveIsAdmin(session)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authReady, session?.user?.id, session?.user?.email])
 
-    // Load user's existing review
-    useEffect(() => {
-        if (!signedIn) { setMyReview(null); setBody(''); setDisplayName(''); setRating(5); return }
-        let mounted = true
-            ; (async () => {
-                const { data, error } = await supabase
-                    .from('reviews')
-                    .select('id, rating, body, display_name')
-                    .eq('user_id', session.user.id)
-                    .maybeSingle()
-                if (!mounted) return
-                if (!error && data) {
-                    setMyReview(data)
-                    setRating(data.rating ?? 5)
-                    setBody(data.body ?? '')
-                    setDisplayName(data.display_name ?? '')
-                }
-            })()
-        return () => { mounted = false }
-    }, [signedIn, session?.user?.id])
-
-    // Page loader (admins see hidden too)
+    // Load wall (admins see hidden, others don't)
     const loadPage = async (reset = false, includeHidden = false) => {
         const from = reset ? 0 : page * pageSize
         const to = from + pageSize - 1
@@ -133,7 +135,7 @@ export default function Reviews() {
         }
     }
 
-    // Initial + whenever role settles → fetch correct list
+    // Fetch first page when both gates are ready
     useEffect(() => {
         if (!authReady || !roleReady) return
         setReviews([])
@@ -142,7 +144,29 @@ export default function Reviews() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authReady, roleReady, isAdmin])
 
-    // Customer check
+    // Load user's existing review into composer
+    useEffect(() => {
+        let mounted = true
+        const run = async () => {
+            if (!signedIn) { setMyReview(null); setBody(''); setDisplayName(''); setRating(5); return }
+            const { data, error } = await supabase
+                .from('reviews')
+                .select('id, rating, body, display_name')
+                .eq('user_id', session.user.id)
+                .maybeSingle()
+            if (!mounted) return
+            if (!error && data) {
+                setMyReview(data)
+                setRating(data.rating ?? 5)
+                setBody(data.body ?? '')
+                setDisplayName(data.display_name ?? '')
+            }
+        }
+        run()
+        return () => { mounted = false }
+    }, [signedIn, session?.user?.id])
+
+    // Helpers
     const userCanReview = async () => {
         if (!signedIn) return false
         const { data, error } = await supabase
@@ -173,7 +197,6 @@ export default function Reviews() {
 
         setMyReview(data)
         setNote('✅ Review saved!')
-        // Re-fetch first page with current role filter (no flicker)
         await loadPage(true, isAdmin)
         wallTopRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
@@ -181,7 +204,6 @@ export default function Reviews() {
     const toggleHidden = async (rev) => {
         if (!isAdmin) return
         const nextHidden = !rev.hidden
-        // optimistic
         setReviews(prev => prev.map(r => r.id === rev.id ? { ...r, hidden: nextHidden } : r))
         const { error } = await supabase.from('reviews').update({ hidden: nextHidden }).eq('id', rev.id)
         if (error) {
@@ -199,7 +221,7 @@ export default function Reviews() {
     }, [visibleForAverage])
     const fmtDate = (d) => new Date(d).toLocaleDateString()
 
-    // Optional skeleton while role is resolving (prevents any flash)
+    // Gate UI until both are ready
     if (!authReady || !roleReady) {
         return (
             <div className="reviews-wall-wrap">
@@ -208,6 +230,8 @@ export default function Reviews() {
             </div>
         )
     }
+
+    const signedInNow = !!session?.user
 
     return (
         <div className="reviews-wall-wrap">
@@ -275,7 +299,7 @@ export default function Reviews() {
             {/* Bottom centered composer */}
             <div className="composer-dock">
                 <article className="card composer-inner">
-                    {!signedIn ? (
+                    {!signedInNow ? (
                         <div>
                             <h4 className="composer-title">Leave a review</h4>
                             <p className="small muted" style={{ marginTop: 0 }}>
