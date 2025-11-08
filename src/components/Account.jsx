@@ -128,7 +128,7 @@ export default function Account() {
                     <p className="small" style={{ marginTop: 8 }}>{note}</p>
                 </form>
             </div>
-
+             
             <div className="card">
                 <h3 style={{ marginTop: 0 }}>My Orders</h3>
                 <Orders compact />
