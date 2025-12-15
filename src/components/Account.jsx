@@ -1,4 +1,4 @@
-// src/components/Account.jsx
+﻿// src/components/Account.jsx
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../state/AuthContext.jsx'
@@ -55,7 +55,7 @@ export default function Account() {
         return (
             <section id="account" className="wrap">
                 <h2 className="section-title">Account</h2>
-                <p className="section-sub">Loading�</p>
+                <p className="section-sub">Loading…</p>
             </section>
         )
     }
@@ -72,7 +72,7 @@ export default function Account() {
 
     async function saveProfile(e) {
         e.preventDefault()
-        setSaving(true); setNote('Saving�')
+        setSaving(true); setNote('Saving…')
         const up = {
             id: user.id,
             full_name: profile?.full_name || '',
@@ -122,7 +122,7 @@ export default function Account() {
                         </div>
                     </div>
                     <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
-                        <button className="cta" type="submit" disabled={saving}>{saving ? 'Saving�' : 'Save profile'}</button>
+                        <button className="cta" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save profile'}</button>
                         <button className="mini-btn" type="button" onClick={signOut}>Sign out</button>
                     </div>
                     <p className="small" style={{ marginTop: 8 }}>{note}</p>
@@ -133,6 +133,109 @@ export default function Account() {
                 <h3 style={{ marginTop: 0 }}>My Orders</h3>
                 <Orders compact />
             </div>
+
+            {/* Change Password */}
+            <div className="card" style={{ marginBottom: 24 }}>
+                <h3 style={{ marginTop: 0 }}>Change Password</h3>
+                <ChangePasswordBlock userEmail={user.email} onAfterChange={() => signOut()} />
+            </div>
+
         </section>
+
     )
 }
+
+function ChangePasswordBlock({ userEmail, onAfterChange }) {
+    const [newPass, setNewPass] = useState('')
+    const [confirm, setConfirm] = useState('')
+    const [working, setWorking] = useState(false)
+    const [msg, setMsg] = useState('')
+
+    const minLen = 6 // Supabase default policy unless you customized it
+
+    const doChange = async (e) => {
+        e.preventDefault()
+        setMsg('');
+
+        if (!newPass || !confirm) return setMsg('Enter and confirm your new password.')
+        if (newPass !== confirm) return setMsg('Passwords do not match.')
+        if (newPass.length < minLen) return setMsg(`Password must be at least ${minLen} characters.`)
+
+        setWorking(true)
+        try {
+            const { error } = await supabase.auth.updateUser({ password: newPass })
+            if (error) {
+                setMsg(error.message || 'Could not change password.')
+                return
+            }
+            setMsg('✅ Password updated. You’ll be signed out to re-authenticate.')
+            // Give a moment for the message, then sign the user out
+            setTimeout(() => {
+                try { onAfterChange?.() } catch { }
+            }, 800)
+        } catch (err) {
+            setMsg(err?.message || 'Unexpected error changing password.')
+        } finally {
+            setWorking(false)
+        }
+    }
+
+    const sendResetEmail = async () => {
+        setMsg('')
+        if (!userEmail) return setMsg('No email on file for this account.')
+
+        setWorking(true)
+        try {
+            const redirectTo =
+                (typeof window !== 'undefined' ? `${window.location.origin}/account` : undefined)
+
+            const { error } = await supabase.auth.resetPasswordForEmail(userEmail, { redirectTo })
+            if (error) {
+                setMsg(error.message || 'Could not send reset email.')
+                return
+            }
+            setMsg('📨 Reset email sent. Check your inbox.')
+        } catch (err) {
+            setMsg(err?.message || 'Unexpected error sending reset email.')
+        } finally {
+            setWorking(false)
+        }
+    }
+
+    return (
+        <form onSubmit={doChange}>
+            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                    <label>New password</label>
+                    <input
+                        type="password"
+                        autoComplete="new-password"
+                        value={newPass}
+                        onChange={(e) => setNewPass(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label>Confirm new password</label>
+                    <input
+                        type="password"
+                        autoComplete="new-password"
+                        value={confirm}
+                        onChange={(e) => setConfirm(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button className="cta" type="submit" disabled={working}>
+                    {working ? 'Updating…' : 'Update password'}
+                </button>
+                <button className="mini-btn" type="button" onClick={sendResetEmail} disabled={working}>
+                    Send reset email
+                </button>
+            </div>
+
+            {msg && <p className="small" style={{ marginTop: 8 }}>{msg}</p>}
+        </form>
+    )
+}
+
