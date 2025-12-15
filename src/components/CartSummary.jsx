@@ -277,14 +277,16 @@ export default function CartSummary() {
     // Admin can fine-tune line items before sending
     const [adminLines, setAdminLines] = useState([])
     useEffect(() => {
-        // initialize from cart whenever items change
-        setAdminLines(billable.map(b => ({
-            title: b.title,
-            description: b.detail || b.title,
-            unit_amount_cents: b.price_cents,
-            quantity: b.qty
-        })))
+        setAdminLines(
+            billable.map(b => ({
+                title: b.title,
+                detail: b.detail || '',
+                price_cents: b.price_cents, // keep cents here
+                qty: b.qty
+            }))
+        )
     }, [billable])
+
 
     const updateLine = (idx, patch) => {
         setAdminLines(lines => lines.map((l, i) => i === idx ? { ...l, ...patch } : l))
@@ -296,7 +298,11 @@ export default function CartSummary() {
         if (!signedIn || !isAdmin) return setNote('Admin sign-in required.')
         if (!recipient.email) return setNote('Recipient email is required.')
         if (adminLines.length === 0) return setNote('Add at least one line item.')
-        const invalid = adminLines.some(l => !Number.isFinite(l.unit_amount_cents) || l.unit_amount_cents < 0 || !Number.isFinite(l.quantity) || l.quantity < 1)
+
+        const invalid = adminLines.some(l =>
+            !Number.isFinite(l.price_cents) || l.price_cents < 0 ||
+            !Number.isFinite(l.qty) || l.qty < 1
+        )
         if (invalid) return setNote('Check your line items (amounts/qty).')
 
         let token = null
@@ -314,23 +320,24 @@ export default function CartSummary() {
                     ...(token ? { authorization: `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({
-                    recipient,
-                    memo,
+                    customer_email: recipient.email,
+                    customer_name: recipient.name || '',
                     net_terms_days: Number(netTerms) || 7,
-                    items: adminLines,
+                    memo: memo || '',
+                    items: adminLines, // [{ title, detail, price_cents, qty }]
                     metadata: { site_order_source: 'phxpressurewash.com' }
                 })
             })
+
             if (!resp.ok) {
                 const t = await resp.text()
                 console.error('create-invoice failed', t)
                 setNote('Could not create/send invoice.')
                 return
             }
-            const { hosted_invoice_url } = await resp.json()
-            setNote(`✅ Invoice sent. ${hosted_invoice_url ? 'View link copied to logs.' : ''}`)
-            // optional: clear cart after sending
-            // clearCart()
+            const out = await resp.json()
+            setNote(`✅ Invoice sent${out.hosted_invoice_url ? ' — link available in Stripe' : ''}.`)
+            // optional: clearCart()
         } catch (e) {
             console.error(e)
             setNote('Network error sending invoice.')
@@ -338,6 +345,7 @@ export default function CartSummary() {
             setBusy(false)
         }
     }
+
 
     // =========================
     // RENDER
@@ -475,8 +483,8 @@ export default function CartSummary() {
                                     />
                                     <input
                                         className="cart-line-sub"
-                                        value={l.description}
-                                        onChange={(e) => updateLine(i, { description: e.target.value })}
+                                        value={l.detail}
+                                        onChange={(e) => updateLine(i, { detail: e.target.value })}
                                         placeholder="Description"
                                     />
                                     <div className="grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: 6 }}>
@@ -486,10 +494,10 @@ export default function CartSummary() {
                                                 type="number"
                                                 min={0}
                                                 step="0.01"
-                                                value={(l.unit_amount_cents / 100).toFixed(2)}
+                                                value={(l.price_cents / 100).toFixed(2)}
                                                 onChange={(e) => {
                                                     const v = Math.max(0, Number(e.target.value || 0))
-                                                    updateLine(i, { unit_amount_cents: Math.round(v * 100) })
+                                                    updateLine(i, { price_cents: Math.round(v * 100) })
                                                 }}
                                             />
                                         </div>
@@ -499,8 +507,8 @@ export default function CartSummary() {
                                                 type="number"
                                                 min={1}
                                                 step="1"
-                                                value={l.quantity}
-                                                onChange={(e) => updateLine(i, { quantity: Math.max(1, Number(e.target.value || 1)) })}
+                                                value={l.qty}
+                                                onChange={(e) => updateLine(i, { qty: Math.max(1, Number(e.target.value || 1)) })}
                                             />
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
@@ -509,6 +517,7 @@ export default function CartSummary() {
                                     </div>
                                 </div>
                             </div>
+
                         ))}
                         {adminLines.length === 0 && <p className="small muted" style={{ margin: 0 }}>No line items.</p>}
                     </div>
