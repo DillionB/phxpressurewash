@@ -12,15 +12,17 @@ const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
 const TEMPLATE_ID_FALLBACK = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
 const TEMPLATE_ID_CART = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_CART
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@phxpressurewash.com'
 
 export default function CartSummary() {
-    const { items, subtotal, removeItem } = useCart()
+    const { items, subtotal, removeItem, clearCart } = useCart()
 
+    // --- shared UI state
     const [note, setNote] = useState('')
     const [busy, setBusy] = useState(false)
-    const [requireAddrConfirm, setRequireAddrConfirm] = useState(false)
 
-    // UI flow
+    // --- address confirm state (customer flow)
+    const [requireAddrConfirm, setRequireAddrConfirm] = useState(false)
     const [showAddr, setShowAddr] = useState(false)
     const [outOfRange, setOutOfRange] = useState(false)
     const [miles, setMiles] = useState(null)
@@ -28,16 +30,25 @@ export default function CartSummary() {
         name: '', email: '', phone: '',
         address: '', city: '', state: '', zip: '',
     })
+    const onAddrChange = (e) => setAddr(a => ({ ...a, [e.target.name]: e.target.value }))
+    const addressString = (o = addr) => [o.address, o.city, o.state, o.zip].filter(Boolean).join(', ')
 
     useEffect(() => { if (PUBLIC_KEY) emailjs.init(PUBLIC_KEY) }, [])
 
     const fmtUSD = (n) => (Number(n || 0)).toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 
+    // Normalize cart lines to unit prices (cents)
     const normalized = useMemo(() => (items || []).map(l => {
         const qty = Math.max(1, Number(l.qty || 1))
         const total = Number(l.subtotal || 0)
         const unit = total / qty
-        return { title: l.title || 'Service', detail: l.detail || '', price_cents: Math.round(unit * 100), qty }
+        return {
+            id: l.id,
+            title: l.title || 'Service',
+            detail: l.detail || '',
+            price_cents: Math.round(unit * 100),
+            qty
+        }
     }), [items])
 
     const billable = useMemo(
@@ -45,9 +56,46 @@ export default function CartSummary() {
         [normalized]
     )
 
-    const addressString = (o = addr) => [o.address, o.city, o.state, o.zip].filter(Boolean).join(', ')
-    const onAddrChange = (e) => setAddr(a => ({ ...a, [e.target.name]: e.target.value }))
+    // ===== Admin detection (same pattern as Reviews.jsx) =====
+    const [session, setSession] = useState(null)
+    const [authReady, setAuthReady] = useState(false)
+    const [roleReady, setRoleReady] = useState(false)
+    const [isAdmin, setIsAdmin] = useState(false)
+    const signedIn = !!session?.user
 
+    useEffect(() => {
+        let unsub
+            ; (async () => {
+                const { data } = await supabase.auth.getSession()
+                setSession(data?.session || null)
+                setAuthReady(true)
+                await resolveIsAdmin(data?.session || null)
+            })()
+        const sub = supabase.auth.onAuthStateChange(async (_evt, s) => {
+            setSession(s)
+            setRoleReady(false)
+            setIsAdmin(false)
+            await resolveIsAdmin(s)
+        })
+        unsub = sub?.data?.subscription
+        return () => unsub?.unsubscribe?.()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    const resolveIsAdmin = async (sess) => {
+        try {
+            const emailIsAdmin = (sess?.user?.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()
+            if (!sess?.user?.id) { setIsAdmin(false); setRoleReady(true); return }
+            const { data } = await supabase.from('profiles').select('is_admin').eq('id', sess.user.id).maybeSingle()
+            setIsAdmin(Boolean(data?.is_admin) || emailIsAdmin)
+        } catch {
+            setIsAdmin(false)
+        } finally {
+            setRoleReady(true)
+        }
+    }
+
+    // ===== Prefill profile for address form (customer flow) =====
     const tryPrefillFromProfile = async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser()
@@ -80,20 +128,19 @@ export default function CartSummary() {
         }
     }
 
-    // Primary button handler (no auto-continue)
-    const onPrimary = async () => {
+    // =========================
+    // CUSTOMER FLOW (Checkout)
+    // =========================
+    const onPrimaryCustomer = async () => {
         setNote('')
-
         if (!items?.length) return setNote('Your cart is empty.')
         if (!billable.length) return setNote('All items are $0 — add a priced service first.')
 
-        // If we’re already showing the form, run the usual branch
         if (showAddr) {
             if (outOfRange) return sendOutOfAreaEmail()
             return validateRadiusAndContinue()
         }
 
-        // NEW: force a reconfirmation pass if user previously hit Back
         if (requireAddrConfirm) {
             setShowAddr(true)
             setOutOfRange(false)
@@ -104,8 +151,8 @@ export default function CartSummary() {
         const prefilled = await tryPrefillFromProfile()
         const haveAddr =
             !!addressString().trim() &&
-            (!!addr.name || prefilled) &&
-            (!!addr.email || prefilled)
+            (addr.name || prefilled) &&
+            (addr.email || prefilled)
 
         if (!haveAddr) {
             setShowAddr(true)
@@ -116,7 +163,6 @@ export default function CartSummary() {
 
         await validateRadiusAndContinue()
     }
-
 
     const validateRadiusAndContinue = async () => {
         setBusy(true); setNote('Checking service area…')
@@ -147,7 +193,7 @@ export default function CartSummary() {
             try {
                 const { data } = await supabase.auth.getSession()
                 accessToken = data?.session?.access_token || null
-            } catch { }
+            } catch { /* ignore */ }
 
             const resp = await fetch('/.netlify/functions/stripe-create-checkout-session', {
                 method: 'POST',
@@ -220,7 +266,83 @@ export default function CartSummary() {
         }
     }
 
-    const primaryLabel = (() => {
+    // =========================
+    // ADMIN FLOW (Send Invoice)
+    // =========================
+    const [adminMode, setAdminMode] = useState('invoice') // 'invoice' | 'checkout'
+    const [recipient, setRecipient] = useState({ email: '', name: '' })
+    const [netTerms, setNetTerms] = useState(7)
+    const [memo, setMemo] = useState('')
+
+    // Admin can fine-tune line items before sending
+    const [adminLines, setAdminLines] = useState([])
+    useEffect(() => {
+        // initialize from cart whenever items change
+        setAdminLines(billable.map(b => ({
+            title: b.title,
+            description: b.detail || b.title,
+            unit_amount_cents: b.price_cents,
+            quantity: b.qty
+        })))
+    }, [billable])
+
+    const updateLine = (idx, patch) => {
+        setAdminLines(lines => lines.map((l, i) => i === idx ? { ...l, ...patch } : l))
+    }
+    const removeLine = (idx) => setAdminLines(lines => lines.filter((_, i) => i !== idx))
+
+    const sendInvoice = async () => {
+        setNote('')
+        if (!signedIn || !isAdmin) return setNote('Admin sign-in required.')
+        if (!recipient.email) return setNote('Recipient email is required.')
+        if (adminLines.length === 0) return setNote('Add at least one line item.')
+        const invalid = adminLines.some(l => !Number.isFinite(l.unit_amount_cents) || l.unit_amount_cents < 0 || !Number.isFinite(l.quantity) || l.quantity < 1)
+        if (invalid) return setNote('Check your line items (amounts/qty).')
+
+        let token = null
+        try {
+            const { data } = await supabase.auth.getSession()
+            token = data?.session?.access_token || null
+        } catch { }
+
+        setBusy(true)
+        try {
+            const resp = await fetch('/.netlify/functions/create-invoice', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    ...(token ? { authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    recipient,
+                    memo,
+                    net_terms_days: Number(netTerms) || 7,
+                    items: adminLines,
+                    metadata: { site_order_source: 'phxpressurewash.com' }
+                })
+            })
+            if (!resp.ok) {
+                const t = await resp.text()
+                console.error('create-invoice failed', t)
+                setNote('Could not create/send invoice.')
+                return
+            }
+            const { hosted_invoice_url } = await resp.json()
+            setNote(`✅ Invoice sent. ${hosted_invoice_url ? 'View link copied to logs.' : ''}`)
+            // optional: clear cart after sending
+            // clearCart()
+        } catch (e) {
+            console.error(e)
+            setNote('Network error sending invoice.')
+        } finally {
+            setBusy(false)
+        }
+    }
+
+    // =========================
+    // RENDER
+    // =========================
+    const primaryCustomerLabel = (() => {
         if (busy) return 'Working…'
         if (!items?.length) return 'Cart is empty'
         if (!billable.length) return 'Add a priced service'
@@ -228,10 +350,8 @@ export default function CartSummary() {
         if (outOfRange) return 'Send Quote Request'
         return 'Check Address & Continue'
     })()
+    const primaryCustomerDisabled = busy || !items?.length || !billable.length
 
-    const primaryDisabled = busy || !items?.length || !billable.length
-
-    // RENDER
     return (
         <aside className="cart card cart-compact" aria-label="Cart">
             <div className="cart-head">
@@ -239,124 +359,256 @@ export default function CartSummary() {
                 <span className="cart-count" aria-label={`${items.length} items in cart`}>{items.length}</span>
             </div>
 
-            {/* Cart view */}
-            {!showAddr && (
-                <>
-                    {items.length === 0 && <p className="small muted" style={{ margin: 0 }}>No items yet.</p>}
-
-                    {items.length > 0 && (
-                        <div className="cart-lines" role="list">
-                            {items.map((item) => (
-                                <div key={item.id || `${item.title}-${Math.random()}`} className="cart-line" role="listitem">
-                                    <div className="cart-line-main">
-                                        <div className="cart-line-title">{item.title}</div>
-                                        {item.detail && <div className="cart-line-sub small">{item.detail}</div>}
-                                        {item.meta && item.meta.length > 0 && (
-                                            <div className="cart-line-tags">
-                                                {item.meta.map((m, i) => <span className="tag-chip" key={`${m}-${i}`}>{m}</span>)}
-                                            </div>
-                                        )}
+            {/* Lines */}
+            {items.length === 0 && <p className="small muted" style={{ margin: 0 }}>No items yet.</p>}
+            {items.length > 0 && (
+                <div className="cart-lines" role="list">
+                    {items.map((item) => (
+                        <div key={item.id || `${item.title}-${Math.random()}`} className="cart-line" role="listitem">
+                            <div className="cart-line-main">
+                                <div className="cart-line-title">{item.title}</div>
+                                {item.detail && <div className="cart-line-sub small">{item.detail}</div>}
+                                {item.meta && item.meta.length > 0 && (
+                                    <div className="cart-line-tags">
+                                        {item.meta.map((m, i) => <span className="tag-chip" key={`${m}-${i}`}>{m}</span>)}
                                     </div>
-                                    <div className="cart-line-right">
-                                        <div className="cart-line-price">{fmtUSD(item.subtotal)}</div>
-                                        <button
-                                            className="cart-remove"
-                                            aria-label={`Remove ${item.title}`}
-                                            title="Remove"
-                                            type="button"
-                                            onClick={() => removeItem(item.id)}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                            </svg>
-                                        </button>
+                                )}
+                            </div>
+                            <div className="cart-line-right">
+                                <div className="cart-line-price">{fmtUSD(item.subtotal)}</div>
+                                <button
+                                    className="cart-remove"
+                                    aria-label={`Remove ${item.title}`}
+                                    title="Remove"
+                                    type="button"
+                                    onClick={() => removeItem(item.id)}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div className="cart-footer-row" aria-live="polite">
+                <span>Subtotal</span>
+                <b>{fmtUSD(subtotal)}</b>
+            </div>
+
+            {/* ===== Admin Switcher ===== */}
+            {authReady && roleReady && isAdmin && items.length > 0 && (
+                <div className="card" style={{ marginTop: 10, padding: 10 }}>
+                    <div className="tiny" style={{ marginBottom: 6, opacity: .8 }}>Admin options</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                            type="button"
+                            className={`mini-btn ${adminMode === 'invoice' ? 'selected' : ''}`}
+                            onClick={() => setAdminMode('invoice')}
+                        >
+                            Send Invoice
+                        </button>
+                        <button
+                            type="button"
+                            className={`mini-btn ${adminMode === 'checkout' ? 'selected' : ''}`}
+                            onClick={() => setAdminMode('checkout')}
+                        >
+                            Customer Checkout
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ===== Admin Invoice Panel ===== */}
+            {authReady && roleReady && isAdmin && adminMode === 'invoice' && items.length > 0 && (
+                <div className="card" style={{ marginTop: 12 }}>
+                    <h4 style={{ marginTop: 0 }}>Send Payable Invoice</h4>
+
+                    <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        <div>
+                            <label className="tiny">Recipient email</label>
+                            <input
+                                value={recipient.email}
+                                onChange={(e) => setRecipient(r => ({ ...r, email: e.target.value }))}
+                                placeholder="customer@example.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="tiny">Recipient name (optional)</label>
+                            <input
+                                value={recipient.name}
+                                onChange={(e) => setRecipient(r => ({ ...r, name: e.target.value }))}
+                                placeholder="Acme Stores"
+                            />
+                        </div>
+                        <div>
+                            <label className="tiny">Net terms (days)</label>
+                            <input
+                                type="number"
+                                min={0}
+                                value={netTerms}
+                                onChange={(e) => setNetTerms(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="tiny">Memo (optional)</label>
+                            <input
+                                value={memo}
+                                onChange={(e) => setMemo(e.target.value)}
+                                placeholder="Pressure wash — scope/memo"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="small" style={{ marginTop: 10, marginBottom: 6 }}>Line items</div>
+                    <div className="cart-lines">
+                        {adminLines.map((l, i) => (
+                            <div key={i} className="cart-line">
+                                <div className="cart-line-main" style={{ width: '100%' }}>
+                                    <input
+                                        className="cart-line-title"
+                                        value={l.title}
+                                        onChange={(e) => updateLine(i, { title: e.target.value })}
+                                        placeholder="Title"
+                                    />
+                                    <input
+                                        className="cart-line-sub"
+                                        value={l.description}
+                                        onChange={(e) => updateLine(i, { description: e.target.value })}
+                                        placeholder="Description"
+                                    />
+                                    <div className="grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: 6 }}>
+                                        <div>
+                                            <label className="tiny">Unit (USD)</label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                step="0.01"
+                                                value={(l.unit_amount_cents / 100).toFixed(2)}
+                                                onChange={(e) => {
+                                                    const v = Math.max(0, Number(e.target.value || 0))
+                                                    updateLine(i, { unit_amount_cents: Math.round(v * 100) })
+                                                }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="tiny">Qty</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                step="1"
+                                                value={l.quantity}
+                                                onChange={(e) => updateLine(i, { quantity: Math.max(1, Number(e.target.value || 1)) })}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                                            <button className="mini-btn" type="button" onClick={() => removeLine(i)}>Remove</button>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
+                            </div>
+                        ))}
+                        {adminLines.length === 0 && <p className="small muted" style={{ margin: 0 }}>No line items.</p>}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <button className="cta" type="button" onClick={sendInvoice} disabled={busy || adminLines.length === 0}>
+                            {busy ? 'Sending…' : 'Send Invoice'}
+                        </button>
+                        <button className="mini-btn" type="button" onClick={clearCart} disabled={busy || items.length === 0}>
+                            Clear Cart
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ===== Customer Checkout Panel (default for non-admins) ===== */}
+            {(!isAdmin || adminMode === 'checkout') && (
+                <>
+                    {!showAddr && (
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10 }}>
+                            <button className="cta cart-checkout-btn" onClick={onPrimaryCustomer} disabled={primaryCustomerDisabled}>
+                                {primaryCustomerLabel}
+                            </button>
+                            <button className="mini-btn" onClick={clearCart} disabled={busy || items.length === 0}>
+                                Clear
+                            </button>
                         </div>
                     )}
 
-                    <div className="cart-footer-row" aria-live="polite">
-                        <span>Subtotal</span>
-                        <b>{fmtUSD(subtotal)}</b>
-                    </div>
-
-                    <button className="cta cart-checkout-btn" onClick={onPrimary} disabled={primaryDisabled}>
-                        {primaryLabel}
-                    </button>
-                </>
-            )}
-
-            {/* Address/Contact view */}
-            {showAddr && (
-                <>
-                    <div className="cart-footer-row" aria-live="polite" style={{ marginTop: 4 }}>
-                        <span>Subtotal</span>
-                        <b>{fmtUSD(subtotal)}</b>
-                    </div>
-
-                    <div className="cart-inline-form" role="region" aria-label="Service address">
-                        <div className="small" style={{ marginBottom: 8 }}>
-                            We’ll check if the address is within our {RADIUS_MILES}-mile service radius before payment.
-                        </div>
-
-                        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                            <div className="full">
-                                <label className="tiny">Name</label>
-                                <input name="name" value={addr.name} onChange={onAddrChange} />
+                    {/* Address/Contact view */}
+                    {showAddr && (
+                        <>
+                            <div className="cart-footer-row" aria-live="polite" style={{ marginTop: 4 }}>
+                                <span>Subtotal</span>
+                                <b>{fmtUSD(subtotal)}</b>
                             </div>
-                            <div>
-                                <label className="tiny">Phone</label>
-                                <input name="phone" value={addr.phone} onChange={onAddrChange} />
-                            </div>
-                            <div className="full">
-                                <label className="tiny">Email</label>
-                                <input name="email" type="email" value={addr.email} onChange={onAddrChange} />
-                            </div>
-                            <div className="full">
-                                <label className="tiny">Address</label>
-                                <input name="address" value={addr.address} onChange={onAddrChange} />
-                            </div>
-                            <div>
-                                <label className="tiny">City</label>
-                                <input name="city" value={addr.city} onChange={onAddrChange} />
-                            </div>
-                            <div>
-                                <label className="tiny">State</label>
-                                <input name="state" value={addr.state} onChange={onAddrChange} />
-                            </div>
-                            <div>
-                                <label className="tiny">ZIP</label>
-                                <input name="zip" value={addr.zip} onChange={onAddrChange} />
-                            </div>
-                        </div>
 
-                        <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                            <button
-                                type="button"
-                                className="mini-btn"
-                                onClick={() => {
-                                    setShowAddr(false)
-                                    setOutOfRange(false)
-                                    setNote('')
-                                    setRequireAddrConfirm(true)   // ← NEW: require reconfirmation next time
-                                }}
-                                disabled={busy}
-                            >
-                                ← Back
-                            </button>
+                            <div className="cart-inline-form" role="region" aria-label="Service address">
+                                <div className="small" style={{ marginBottom: 8 }}>
+                                    We’ll check if the address is within our {RADIUS_MILES}-mile service radius before payment.
+                                </div>
 
+                                <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                    <div className="full">
+                                        <label className="tiny">Name</label>
+                                        <input name="name" value={addr.name} onChange={onAddrChange} />
+                                    </div>
+                                    <div>
+                                        <label className="tiny">Phone</label>
+                                        <input name="phone" value={addr.phone} onChange={onAddrChange} />
+                                    </div>
+                                    <div className="full">
+                                        <label className="tiny">Email</label>
+                                        <input name="email" type="email" value={addr.email} onChange={onAddrChange} />
+                                    </div>
+                                    <div className="full">
+                                        <label className="tiny">Address</label>
+                                        <input name="address" value={addr.address} onChange={onAddrChange} />
+                                    </div>
+                                    <div>
+                                        <label className="tiny">City</label>
+                                        <input name="city" value={addr.city} onChange={onAddrChange} />
+                                    </div>
+                                    <div>
+                                        <label className="tiny">State</label>
+                                        <input name="state" value={addr.state} onChange={onAddrChange} />
+                                    </div>
+                                    <div>
+                                        <label className="tiny">ZIP</label>
+                                        <input name="zip" value={addr.zip} onChange={onAddrChange} />
+                                    </div>
+                                </div>
 
-                            <button
-                                type="button"
-                                className="cta"
-                                onClick={() => (outOfRange ? sendOutOfAreaEmail() : validateRadiusAndContinue())}
-                                disabled={busy}
-                            >
-                                {busy ? 'Working…' : (outOfRange ? 'Send Quote Request' : 'Check Address & Continue')}
-                            </button>
-                        </div>
-                    </div>
+                                <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
+                                    <button
+                                        type="button"
+                                        className="mini-btn"
+                                        onClick={() => {
+                                            setShowAddr(false)
+                                            setOutOfRange(false)
+                                            setNote('')
+                                            setRequireAddrConfirm(true)
+                                        }}
+                                        disabled={busy}
+                                    >
+                                        ← Back
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="cta"
+                                        onClick={() => (outOfRange ? sendOutOfAreaEmail() : validateRadiusAndContinue())}
+                                        disabled={busy}
+                                    >
+                                        {busy ? 'Working…' : (outOfRange ? 'Send Quote Request' : 'Check Address & Continue')}
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </>
             )}
 

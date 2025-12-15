@@ -6,3 +6,4 @@ dist/
 Thumbs.db 
 npm-debug.log* 
 yarn-error.log* 
+/src/assets/bg.png
