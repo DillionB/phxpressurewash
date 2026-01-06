@@ -16,7 +16,7 @@ export default function Footer(){
         </div>
         <div>
           <h4 style={{ margin: '0 0 8px' }}>Contact</h4>
-          <p className="small">Phone: <a href="tel:+16233138176">(623) 313-8176</a><br/>Email: <a href="mailto:info@phoenixwash.co">info@phoenixwash.co</a></p>
+          <p className="small">Phone: <a href="tel:+16233138176">(623) 313-8176</a><br/>Email: <a href="mailto:admin@phxpressurewash.com">admin@phxpressurewash.com</a></p>
         </div>
         <div>
           <h4 style={{ margin: '0 0 8px' }}>Quick Links</h4>
