@@ -187,7 +187,7 @@ img, svg, video {
     .nav-toggle {
         display: inline-grid;
         place-items: center;
-        width: 44px;
+        width: 70px;
         height: 44px;
         border-radius: 12px;
         border: 1px solid var(--line);
@@ -202,31 +202,11 @@ img, svg, video {
         border-color: var(--teal-soft);
     }
 
-    .nav-toggle-bars {
-        width: 18px;
-        height: 2px;
-        background: currentColor;
-        position: relative;
-        border-radius: 999px;
-    }
-
-    .nav-toggle-bars::before,
-    .nav-toggle-bars::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: currentColor;
-        border-radius: 999px;
-    }
-
-    .nav-toggle-bars::before {
-        top: -6px;
-    }
-
-    .nav-toggle-bars::after {
-        top: 6px;
+    .nav-toggle-label {
+        font-weight: 900;
+        letter-spacing: .6px;
+        font-size: 12px;
+        text-transform: uppercase;
     }
 
     /* Make the CTA still fit on mobile */

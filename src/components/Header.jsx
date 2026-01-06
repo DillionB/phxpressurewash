@@ -93,7 +93,7 @@ export default function Header(){
           aria-controls="mobile-nav"
           onClick={() => setMobileOpen(v => !v)}
         >
-          <span className="nav-toggle-bars" aria-hidden="true" />
+          <span className="nav-toggle-label">Menu</span>
         </button>
 
         <a className="cta" href="/contact" onClick={(e) => { e.preventDefault(); navigate('/contact') }}>
