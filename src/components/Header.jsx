@@ -96,7 +96,7 @@ export default function Header(){
           <span className="nav-toggle-bars" aria-hidden="true" />
         </button>
 
-        <a className="cta" href="/#contact" onClick={gotoHomeAnchor('contact')}>
+        <a className="cta" href="/contact" onClick={(e) => { e.preventDefault(); navigate('/contact') }}>
           Get a Free Quote
         </a>
       </div>
@@ -125,7 +125,11 @@ export default function Header(){
               <NavLink to="/contact" className={({isActive}) => isActive ? 'active' : undefined}>Contact</NavLink>
               <NavLink to="/account" className={({isActive}) => isActive ? 'active' : undefined}>{accountLabel}</NavLink>
 
-              <a className="cta mobile-cta" href="/#contact" onClick={(e) => { setMobileOpen(false); gotoHomeAnchor('contact')(e) }}>
+              <a
+                className="cta mobile-cta"
+                href="/contact"
+                onClick={(e) => { e.preventDefault(); setMobileOpen(false); navigate('/contact') }}
+              >
                 Get a Free Quote
               </a>
             </div>
