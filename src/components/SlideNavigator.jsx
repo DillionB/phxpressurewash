@@ -27,6 +27,13 @@ export default function SlideNavigator() {
     })()
 
     useEffect(() => {
+        // Mobile should scroll normally; disable swipe-to-change-route.
+        // (Keep the component in place so desktop behavior stays unchanged.)
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            const isMobile = window.matchMedia('(max-width: 960px)').matches
+            if (isMobile) return
+        }
+
         const throttle = (fn, ms) => (...args) => {
             if (ticking.current) return
             ticking.current = true

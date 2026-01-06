@@ -155,3 +155,166 @@ img, svg, video {
     .cta:hover {
         filter: brightness(1.05)
     }
+
+/* ===========================
+   MOBILE NAV (hamburger + drawer)
+   Desktop remains unchanged; these only activate under 960px.
+   =========================== */
+.nav-toggle {
+    display: none;
+}
+
+@media (max-width: 960px) {
+    .nav {
+        gap: 10px;
+    }
+
+    /* Keep brand readable but compact */
+    .brand {
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .brand-title {
+        display: none;
+    }
+
+    .logo-img {
+        height: 38px;
+    }
+
+    /* Hamburger appears on mobile; desktop navlinks already hidden in components.css */
+    .nav-toggle {
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(16,39,39,.65);
+        color: var(--ink);
+        cursor: pointer;
+        flex: 0 0 auto;
+        order: 3;
+    }
+
+    .nav-toggle:hover {
+        border-color: var(--teal-soft);
+    }
+
+    .nav-toggle-bars {
+        width: 18px;
+        height: 2px;
+        background: currentColor;
+        position: relative;
+        border-radius: 999px;
+    }
+
+    .nav-toggle-bars::before,
+    .nav-toggle-bars::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: currentColor;
+        border-radius: 999px;
+    }
+
+    .nav-toggle-bars::before {
+        top: -6px;
+    }
+
+    .nav-toggle-bars::after {
+        top: 6px;
+    }
+
+    /* Make the CTA still fit on mobile */
+    .topbar .cta {
+        padding: 10px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+        order: 4;
+    }
+}
+
+.mobile-nav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 60;
+}
+
+.mobile-nav-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100dvh;
+    width: min(84vw, 360px);
+    background: linear-gradient(180deg, rgba(14,38,38,.98), rgba(10,26,26,.98));
+    border-left: 1px solid var(--line);
+    z-index: 61;
+    padding: 14px;
+    box-shadow: -18px 0 50px rgba(0,0,0,.45);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 12px;
+}
+
+.mobile-nav-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.mobile-nav-title {
+    font-weight: 900;
+    letter-spacing: .4px;
+}
+
+.mobile-nav-close {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(16,39,39,.65);
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.mobile-nav-links {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+}
+
+.mobile-nav-links a {
+    text-decoration: none;
+    font-weight: 800;
+    color: var(--ink);
+    padding: 12px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(16,39,39,.92), rgba(10,26,26,.92));
+}
+
+.mobile-nav-links a.active {
+    border-color: var(--sun);
+    box-shadow: inset 0 -2px 0 var(--sun);
+}
+
+.mobile-nav-links .mobile-cta {
+    margin-top: 10px;
+    text-align: center;
+}
+
+@media (max-width: 420px) {
+    /* On very small phones, hide the header CTA to avoid overlap.
+       The same CTA remains available inside the hamburger drawer. */
+    .topbar .cta {
+        display: none;
+    }
+}

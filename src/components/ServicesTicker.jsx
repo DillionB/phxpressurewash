@@ -27,14 +27,13 @@ export default function ServicesTicker() {
 
     const loop = useMemo(() => [...services, ...services, ...services], [])
 
-    const Card = ({ s, k }) => {
+    const Card = ({ s }) => {
         const route = targetsByBadge[s.badge] || targetsByTitle[s.title] || '/shop/res?tab=driveway'
         const go = () => navigate(route)
 
         return (
             <article
                 className="ticker-card as-button"
-                key={k}
                 role="button"
                 tabIndex={0}
                 onClick={go}
@@ -54,7 +53,9 @@ export default function ServicesTicker() {
         <div className="ticker">
             <div className="ticker-viewport">
                 <div className="ticker-track">
-                    {loop.map((s, i) => <Card s={s} k={`${s.title}-${i}`} />)}
+                    {loop.map((s, i) => (
+                        <Card key={`${s.title}-${i}`} s={s} />
+                    ))}
                 </div>
             </div>
         </div>

@@ -5,6 +5,10 @@ import ServicesTicker from '../components/ServicesTicker.jsx'
 
 export default function Home() {
   useEffect(() => {
+    const isMobile = typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(max-width: 960px)').matches
+      : false
+
     if (window.location.hash) {
       const id = window.location.hash.slice(1)
       const el = document.getElementById(id)
@@ -12,9 +16,15 @@ export default function Home() {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
     }
+
+    // Desktop-only: keep the “screen” style home experience.
+    // Mobile: allow normal scrolling.
     const rs = document.getElementById('route-scroll')
-    rs?.classList.add('no-scroll')
-    return () => rs?.classList.remove('no-scroll')
+    if (!isMobile) rs?.classList.add('no-scroll')
+
+    return () => {
+      if (!isMobile) rs?.classList.remove('no-scroll')
+    }
   }, [])
 
   return (
