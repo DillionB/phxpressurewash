@@ -274,6 +274,28 @@ export default function CartSummary() {
     const [netTerms, setNetTerms] = useState(7)
     const [memo, setMemo] = useState('')
 
+    // Custom "Other" service builder (admin only)
+    const [customService, setCustomService] = useState({ name: '', price: '', detail: '' })
+    const addCustomService = () => {
+        if (!customService.name.trim()) {
+            setNote('Please enter a service name.')
+            return
+        }
+        const priceNum = parseFloat(customService.price)
+        if (isNaN(priceNum) || priceNum < 0) {
+            setNote('Please enter a valid price.')
+            return
+        }
+        addItem({
+            title: customService.name.trim(),
+            detail: customService.detail.trim() || '',
+            subtotal: priceNum,
+            meta: ['custom']
+        })
+        setCustomService({ name: '', price: '', detail: '' })
+        setNote('✅ Custom service added to cart.')
+    }
+
     // Admin can fine-tune line items before sending
     const [adminLines, setAdminLines] = useState([])
     useEffect(() => {
@@ -405,6 +427,55 @@ export default function CartSummary() {
                 <span>Subtotal</span>
                 <b>{fmtUSD(subtotal)}</b>
             </div>
+
+            {/* ===== Admin Custom Service Builder ===== */}
+            {authReady && roleReady && isAdmin && (
+                <div className="card" style={{ marginTop: 12, padding: 12, background: 'rgba(255, 189, 168, 0.1)', border: '1px solid rgba(255, 189, 168, 0.3)' }}>
+                    <h4 style={{ marginTop: 0, marginBottom: 8, fontSize: '0.95rem' }}>Add Custom Service</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div>
+                            <label className="tiny" style={{ marginBottom: 4, display: 'block' }}>Service Name</label>
+                            <input
+                                type="text"
+                                placeholder="e.g., Emergency Cleanup"
+                                value={customService.name}
+                                onChange={(e) => setCustomService(s => ({ ...s, name: e.target.value }))}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <div>
+                            <label className="tiny" style={{ marginBottom: 4, display: 'block' }}>Price (USD)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={customService.price}
+                                onChange={(e) => setCustomService(s => ({ ...s, price: e.target.value }))}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <div>
+                            <label className="tiny" style={{ marginBottom: 4, display: 'block' }}>Description (optional)</label>
+                            <input
+                                type="text"
+                                placeholder="e.g., Special project details"
+                                value={customService.detail}
+                                onChange={(e) => setCustomService(s => ({ ...s, detail: e.target.value }))}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            className="cta"
+                            onClick={addCustomService}
+                            style={{ marginTop: 4 }}
+                        >
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* ===== Admin Switcher ===== */}
             {authReady && roleReady && isAdmin && items.length > 0 && (
