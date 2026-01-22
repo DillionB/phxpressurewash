@@ -15,7 +15,7 @@ const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@phxpressurewash.com'
 
 export default function CartSummary() {
-    const { items, subtotal, removeItem, clearCart } = useCart()
+    const { items, subtotal, addItem, removeItem, clearCart } = useCart()
 
     // --- shared UI state
     const [note, setNote] = useState('')
